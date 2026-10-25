@@ -283,29 +283,28 @@
       '<div class="actions"><button class="btn primary" ' + navAttr("practice", { id: L.id, back: lessonBack(L.id) }) + ">Weiter: Übungen</button></div></section>";
   }
 
-  // ---------- Karteikarten ----------
+  // ---------- Karteikarten (Übersetzung immer sichtbar) ----------
   function study(o) {
-    // o: {pool, title, back, blocks:boolean}
-    let pool = o.pool, dir = "sr", onlyOpen = false, deck = [], idx = 0, flipped = false, block = 0;
+    // o: {pool, back, blocks, review}
+    const pool = o.pool;
+    let onlyOpen = false, deck = [], idx = 0, block = 0;
     const review = !!o.review;
-    const blocks = o.blocks ? Math.ceil(o.pool.length / 10) : 0;
+    const blocks = o.blocks ? Math.ceil(pool.length / 10) : 0;
     app.innerHTML =
       '<div class="panel"><div class="row">' +
       (blocks ? '<select id="blk" aria-label="Block"><option value="0">Alle ' + pool.length + "</option>" +
         Array.from({ length: blocks }, (_, i) => '<option value="' + (i + 1) + '">Block ' + (i + 1) + " (" + (i * 10 + 1) + "–" + Math.min((i + 1) * 10, pool.length) + ")</option>").join("") + "</select>" : "") +
-      '<select id="dir" aria-label="Richtung"><option value="sr">Serbisch → Deutsch</option><option value="de">Deutsch → Serbisch</option></select>' +
       (review ? "" : '<label class="chk"><input type="checkbox" id="open"> nur offene</label>') + "</div>" +
       '<div class="muted" id="count"></div><div id="fill"></div>' +
-      '<div class="card" id="card" role="button" tabindex="0" aria-label="Karte umdrehen"></div>' +
-      '<div class="actions"><button class="btn bad" id="again">Nochmal</button><button class="btn" id="flip">Umdrehen</button><button class="btn good" id="known">Gewusst</button></div>' +
+      '<div class="card" id="card" aria-live="polite"></div>' +
+      '<div class="actions"><button class="btn bad" id="again">Noch unsicher</button><button class="btn" id="skip">Weiter</button><button class="btn good" id="known">Gewusst</button></div>' +
       '<div class="actions"><button class="btn" id="shuf">Neu mischen</button></div></div>';
     const card = $("card");
-    const srFront = () => dir === "sr";
     const inScope = () => pool.filter((x, i) => !block || (i >= (block - 1) * 10 && i < block * 10));
 
     function build() {
       deck = shuffle(inScope().filter((x) => !onlyOpen || !S.known[x.key]));
-      idx = 0; flipped = false; render(true);
+      idx = 0; render(true);
     }
     function render(speakNew) {
       const scope = inScope();
@@ -318,23 +317,16 @@
         return;
       }
       const x = deck[idx];
-      const showSr = srFront() || flipped;
       const sentence = x.kind === "s";
       card.innerHTML =
         '<div class="hint">' + (x.lesson ? "Lektion " + x.lesson : "") + "</div>" +
-        '<div class="big' + (sentence ? " sent" : "") + '">' + esc(srFront() ? x.sr : x.de) + "</div>" +
-        (showSr ? '<div class="pron">' + esc(x.pr) + "</div>" : "") +
-        (flipped ? '<div class="trans' + (sentence ? " sent" : "") + '">' + esc(srFront() ? x.de : x.sr) + "</div>" : "") +
-        (showSr ? earBtn(x.sr) : "") +
-        '<div class="hint">' + (flipped ? "" : "Tippen zum Umdrehen") + "</div>";
-      if (speakNew && srFront()) autoSay(x.sr);
+        '<div class="big' + (sentence ? " sent" : "") + '">' + esc(x.sr) + "</div>" +
+        '<div class="pron">' + esc(x.pr) + "</div>" +
+        '<div class="trans' + (sentence ? " sent" : "") + '">' + esc(x.de) + "</div>" +
+        earBtn(x.sr, "Nochmal anhören");
+      if (speakNew) autoSay(x.sr);
     }
-    function reveal() {
-      if (!deck.length) return;
-      flipped = !flipped; render(false);
-      if (flipped && !srFront()) autoSay(deck[idx].sr);
-    }
-    function next() { idx = (idx + 1) % deck.length; flipped = false; render(true); }
+    function next() { idx = (idx + 1) % deck.length; render(true); }
     function answer(good) {
       if (!deck.length) return;
       const x = deck[idx];
@@ -343,16 +335,13 @@
       if (good && (onlyOpen || review)) {
         deck.splice(idx, 1);
         if (idx >= deck.length) idx = 0;
-        flipped = false; render(true);
+        render(true);
       } else next();
     }
-    card.addEventListener("click", (e) => { if (!e.target.closest("[data-say],[data-nav]")) reveal(); });
-    card.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); reveal(); } });
-    $("flip").onclick = reveal;
+    $("skip").onclick = () => { if (deck.length) next(); };
     $("again").onclick = () => answer(false);
     $("known").onclick = () => answer(true);
     $("shuf").onclick = build;
-    $("dir").onchange = (e) => { dir = e.target.value; flipped = false; render(true); };
     if (!review) $("open").onchange = (e) => { onlyOpen = e.target.checked; build(); };
     if (blocks) $("blk").onchange = (e) => { block = +e.target.value; build(); };
     build();

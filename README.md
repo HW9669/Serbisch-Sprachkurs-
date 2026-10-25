@@ -21,6 +21,8 @@ Jede Lektion hat sechs Schritte: Dialog hören, 50 Vokabeln (in Blöcken zu 10),
 
 ## Ton
 
+In den Lernkarten, Dialogen und Listen ist die deutsche Übersetzung immer sichtbar; nur in den Prüfungen (Quiz, Hören, Lückentext, Lektionstest) ist sie verborgen.
+
 Jedes neue Wort, jeder neue Satz und jeder Dialog wird automatisch vorgesprochen. Der Ton kommt aus der Sprachausgabe des Browsers; die Stimme kann in den Einstellungen gewählt werden. Ohne installierte serbische Stimme wird ersatzweise eine kroatische oder bosnische verwendet.
 
 ## Benutzen
