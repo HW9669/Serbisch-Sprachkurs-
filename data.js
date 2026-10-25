@@ -1,256 +1,464 @@
-// Serbisch für Anfänger – Daten (lateinische Schrift, ekavischer Standard wie in Serbien)
-// Aussprache in deutscher Lautschrift (österreichisches Deutsch); Betonung in GROSSBUCHSTABEN.
+// Serbisch für Anfänger – 10 Lektionen, 500 Vokabeln, 100 Sätze
+// Lateinische Schrift, ekavischer Standard (Serbien).
+// Betonung: Der betonte Vokal trägt einen Akzent (á é í ó ú, ŕ für silbisches r).
+// app.js erzeugt daraus die normale Schreibweise (für Anzeige und Ton) und die
+// deutsche Lautschrift (betonte Silbe in GROSSBUCHSTABEN).
+// Format: Wörter und Sätze = [Serbisch, Deutsch]; Dialog = [Sprecher, Serbisch, Deutsch].
 
-const WORDS = [
-  // [Serbisch, Deutsch, Aussprache, Kategorie]
-  // Grundlagen
-  ["da", "ja", "da", "Grundlagen"],
-  ["ne", "nein", "ne", "Grundlagen"],
-  ["molim", "bitte", "MO-lim", "Grundlagen"],
-  ["hvala", "danke", "CHWA-la", "Grundlagen"],
-  ["izvinite", "Entschuldigung", "IS-wi-ni-te", "Grundlagen"],
-  ["zdravo", "hallo", "SDRA-wo", "Grundlagen"],
-  ["doviđenja", "auf Wiedersehen", "DO-wi-dje-nja", "Grundlagen"],
-  ["dobro", "gut", "DO-bro", "Grundlagen"],
-  ["loše", "schlecht", "LO-sche", "Grundlagen"],
-  ["ja", "ich", "ja", "Grundlagen"],
-  ["ti", "du", "ti", "Grundlagen"],
-  ["vi", "Sie / ihr", "wi", "Grundlagen"],
-  ["mi", "wir", "mi", "Grundlagen"],
+const LESSONS = [
+  // ------------------------------------------------------------------ 1
+  {
+    id: 1,
+    title: "Begrüßung & Vorstellung",
+    goal: "Grüßen, dich vorstellen, nach Namen, Herkunft und Befinden fragen.",
+    dialog: [
+      ["Ana", "Dóbar dan! Káko se zóveš?", "Guten Tag! Wie heißt du?"],
+      ["Marko", "Zóvem se Márko. A ti?", "Ich heiße Marko. Und du?"],
+      ["Ana", "Zóvem se Ána. Drágo mi je.", "Ich heiße Ana. Freut mich."],
+      ["Marko", "Drágo mi je. Ódakle si?", "Freut mich auch. Woher kommst du?"],
+      ["Ana", "Ja sam iz Béča. A ti?", "Ich bin aus Wien. Und du?"],
+      ["Marko", "Ja sam iz Béograda.", "Ich bin aus Belgrad."]
+    ],
+    grammar: {
+      title: "Du oder Sie? Und das Verb „biti“ (sein)",
+      text: [
+        "ti = du (Freunde, Familie, Kinder). vi = Sie (höflich) und ihr. Mit „vi“ wird auch eine einzelne Person gesiezt: Kako ste? (Sie) – Kako si? (du).",
+        "Das Verb „biti“ (sein): ja sam · ti si · on/ona je · mi smo · vi ste · oni su.",
+        "Das Pronomen wird oft weggelassen: Zovem se Herbert (statt „Ja se zovem Herbert“)."
+      ]
+    },
+    words: [
+      ["zdrávo", "hallo"], ["dóbar dan", "guten Tag"], ["dóbro jútro", "guten Morgen"], ["dóbro véče", "guten Abend"],
+      ["láku nóć", "gute Nacht"], ["doviđénja", "auf Wiedersehen"], ["ćáo", "servus / tschüss"], ["vídimo se", "bis bald"],
+      ["hvála", "danke"], ["mólim", "bitte"], ["izvínite", "Entschuldigung (Sie)"], ["oprósti", "Entschuldige (du)"],
+      ["dá", "ja"], ["né", "nein"], ["já", "ich"], ["tí", "du"], ["ón", "er"], ["óna", "sie (Einzahl)"],
+      ["mí", "wir"], ["ví", "ihr / Sie"], ["íme", "Vorname"], ["prézime", "Nachname"], ["káko", "wie"], ["kó", "wer"],
+      ["štá", "was"], ["gdé", "wo"], ["ódakle", "woher"], ["zášto", "warum"], ["káda", "wann"], ["zóvem se", "ich heiße"],
+      ["sám", "ich bin"], ["sí", "du bist"], ["jé", "er / sie / es ist"], ["smó", "wir sind"], ["sté", "ihr seid / Sie sind"],
+      ["sú", "sie sind"], ["dóbro", "gut"], ["lóše", "schlecht"], ["ódlično", "ausgezeichnet"], ["drágo mi je", "freut mich"],
+      ["Béč", "Wien"], ["Béograd", "Belgrad"], ["Áustrija", "Österreich"], ["Sŕbija", "Serbien"], ["némački", "Deutsch"],
+      ["sŕpski", "Serbisch"], ["éngleski", "Englisch"], ["govóriti", "sprechen"], ["razúmeti", "verstehen"], ["živéli", "Prost! / Zum Wohl!"]
+    ],
+    sentences: [
+      ["Káko se zóveš?", "Wie heißt du?"],
+      ["Káko se zóvete?", "Wie heißen Sie?"],
+      ["Zóvem se Hérbert.", "Ich heiße Herbert."],
+      ["Drágo mi je.", "Freut mich."],
+      ["Ódakle si?", "Woher kommst du?"],
+      ["Ja sam iz Béča.", "Ich bin aus Wien."],
+      ["Govóriš li némački?", "Sprichst du Deutsch?"],
+      ["Káko si?", "Wie geht's dir?"],
+      ["Dóbro sam, hvála. A ti?", "Mir geht's gut, danke. Und dir?"],
+      ["Ne razúmem.", "Ich verstehe nicht."]
+    ]
+  },
 
-  // Zahlen
-  ["jedan", "eins", "JE-dan", "Zahlen"],
-  ["dva", "zwei", "dwa", "Zahlen"],
-  ["tri", "drei", "tri", "Zahlen"],
-  ["četiri", "vier", "TSCHE-ti-ri", "Zahlen"],
-  ["pet", "fünf", "pet", "Zahlen"],
-  ["šest", "sechs", "schest", "Zahlen"],
-  ["sedam", "sieben", "ßE-dam", "Zahlen"],
-  ["osam", "acht", "O-ßam", "Zahlen"],
-  ["devet", "neun", "DE-wet", "Zahlen"],
-  ["deset", "zehn", "DE-ßet", "Zahlen"],
-  ["dvadeset", "zwanzig", "DWA-de-ßet", "Zahlen"],
-  ["sto", "hundert", "ßto", "Zahlen"],
-  ["hiljada", "tausend", "CHI-lja-da", "Zahlen"],
+  // ------------------------------------------------------------------ 2
+  {
+    id: 2,
+    title: "Zahlen, Zeit & Wochentage",
+    goal: "Zahlen, Uhrzeit und Wochentage: Termine ausmachen.",
+    dialog: [
+      ["Kupac", "Dóbar dan! Imáte li vréme sútra?", "Guten Tag! Haben Sie morgen Zeit?"],
+      ["Agent", "Dóbar dan! Sútra je útorak. Imám vréme u déset sáti.", "Guten Tag! Morgen ist Dienstag. Ich habe um zehn Uhr Zeit."],
+      ["Kupac", "Ódlično. Vídimo se sútra u déset.", "Ausgezeichnet. Wir sehen uns morgen um zehn."],
+      ["Agent", "Dóbro. Doviđénja!", "Gut. Auf Wiedersehen!"]
+    ],
+    grammar: {
+      title: "Uhrzeit und Zahlen",
+      text: [
+        "Koliko je sati? – Pet je sati. Nach 2, 3, 4 heißt es „sata“ (dva sata, tri sata), ab 5 „sati“ (pet sati, deset sati).",
+        "Wochentage schreibt man klein: ponedeljak, utorak, sreda … „u“ + Wochentag heißt „am“: u petak = am Freitag."
+      ]
+    },
+    words: [
+      ["núla", "null"], ["jédan", "eins"], ["dvá", "zwei"], ["trí", "drei"], ["četíri", "vier"], ["pét", "fünf"],
+      ["šést", "sechs"], ["sédam", "sieben"], ["ósam", "acht"], ["dévet", "neun"], ["déset", "zehn"], ["jedánaest", "elf"],
+      ["dvánaest", "zwölf"], ["dvádeset", "zwanzig"], ["trídeset", "dreißig"], ["pedéset", "fünfzig"], ["stó", "hundert"],
+      ["híljada", "tausend"], ["dánas", "heute"], ["sútra", "morgen"], ["júče", "gestern"], ["sáda", "jetzt"],
+      ["sát", "Stunde / Uhr"], ["mínut", "Minute"], ["dán", "Tag"], ["nedélja", "Sonntag / Woche"], ["mésec", "Monat"],
+      ["gódina", "Jahr"], ["jútro", "Morgen"], ["véče", "Abend"], ["pódne", "Mittag"], ["nóć", "Nacht"], ["ponóć", "Mitternacht"],
+      ["vréme", "Zeit / Wetter"], ["ráno", "früh"], ["kásno", "spät"], ["úvek", "immer"], ["níkad", "nie"],
+      ["ponédeljak", "Montag"], ["útorak", "Dienstag"], ["sréda", "Mittwoch"], ["čétvrtak", "Donnerstag"], ["pétak", "Freitag"],
+      ["súbota", "Samstag"], ["póla", "halb"], ["slédeći", "nächster"], ["próšli", "letzter / vergangener"],
+      ["víkend", "Wochenende"], ["práznik", "Feiertag"], ["rođéndan", "Geburtstag"]
+    ],
+    sentences: [
+      ["Kóliko je sáti?", "Wie spät ist es?"],
+      ["Pet je sáti.", "Es ist fünf Uhr."],
+      ["Dánas je ponédeljak.", "Heute ist Montag."],
+      ["Sútra je útorak.", "Morgen ist Dienstag."],
+      ["Vídimo se u pétak.", "Wir sehen uns am Freitag."],
+      ["Sástanak je u déset sáti.", "Der Termin ist um zehn Uhr."],
+      ["Imám vréme sútra.", "Ich habe morgen Zeit."],
+      ["Kóliko imáte gódina?", "Wie alt sind Sie?"],
+      ["Kada imáš rođéndan?", "Wann hast du Geburtstag?"],
+      ["Dóbar víkend!", "Schönes Wochenende!"]
+    ]
+  },
 
-  // Familie
-  ["porodica", "Familie", "po-RO-di-za", "Familie"],
-  ["majka", "Mutter", "MAJ-ka", "Familie"],
-  ["otac", "Vater", "O-taz", "Familie"],
-  ["sestra", "Schwester", "ßES-tra", "Familie"],
-  ["brat", "Bruder", "brat", "Familie"],
-  ["sin", "Sohn", "ßin", "Familie"],
-  ["ćerka", "Tochter", "TJER-ka", "Familie"],
-  ["muž", "Ehemann", "muzh", "Familie"],
-  ["žena", "Frau", "ZHE-na", "Familie"],
-  ["baka", "Oma", "BA-ka", "Familie"],
-  ["deda", "Opa", "DE-da", "Familie"],
-  ["dete", "Kind", "DE-te", "Familie"],
-  ["prijatelj", "Freund", "PRI-ja-telj", "Familie"],
-  ["prijateljica", "Freundin", "PRI-ja-te-lji-za", "Familie"],
+  // ------------------------------------------------------------------ 3
+  {
+    id: 3,
+    title: "Familie & Menschen",
+    goal: "Über die Familie sprechen und Personen beschreiben.",
+    dialog: [
+      ["Ana", "Imáš li bráta ili séstru?", "Hast du einen Bruder oder eine Schwester?"],
+      ["Marko", "Imám séstru. Ona se zóve Mája.", "Ich habe eine Schwester. Sie heißt Maja."],
+      ["Marko", "A ti? Imáš li bráta?", "Und du? Hast du einen Bruder?"],
+      ["Ana", "Ne, némam bráta. Imám sámo séstru.", "Nein, ich habe keinen Bruder. Ich habe nur eine Schwester."],
+      ["Marko", "A tvója pórodica? Živi li u Béču?", "Und deine Familie? Lebt sie in Wien?"],
+      ["Ana", "Da, móji róditelji žíve u Béču.", "Ja, meine Eltern leben in Wien."]
+    ],
+    grammar: {
+      title: "Mein, dein, unser – und „nicht haben“",
+      text: [
+        "mein: moj (männlich), moja (weiblich), moje (sächlich). So auch tvoj/tvoja/tvoje, naš/naša/naše, vaš/vaša/vaše. Beispiel: moj otac, moja majka, moje dete.",
+        "ich habe = imam, ich habe nicht = nemam (ne + imam). Genauso: sam → nisam (ich bin nicht)."
+      ]
+    },
+    words: [
+      ["pórodica", "Familie"], ["májka", "Mutter"], ["ótac", "Vater"], ["máma", "Mama"], ["táta", "Papa"], ["róditelji", "Eltern"],
+      ["sín", "Sohn"], ["ćérka", "Tochter"], ["brát", "Bruder"], ["séstra", "Schwester"], ["múž", "Ehemann"], ["žéna", "Frau / Ehefrau"],
+      ["báka", "Oma"], ["déda", "Opa"], ["únuk", "Enkel"], ["únuka", "Enkelin"], ["tétka", "Tante"], ["újak", "Onkel (mütterlich)"],
+      ["stríc", "Onkel (väterlich)"], ["róđak", "Cousin / Verwandter"], ["déte", "Kind"], ["déca", "Kinder"], ["béba", "Baby"],
+      ["déčak", "Bub"], ["devójčica", "Mädchen"], ["múškarac", "Mann"], ["čóvek", "Mensch"], ["dévojka", "junge Frau / Freundin"],
+      ["mómak", "junger Mann / Freund"], ["prijátelj", "Freund"], ["prijáteljica", "Freundin"], ["kómšija", "Nachbar"], ["góst", "Gast"],
+      ["stár", "alt"], ["mlád", "jung"], ["véliki", "groß"], ["máli", "klein"], ["lép", "schön"], ["vísok", "hochgewachsen"],
+      ["nízak", "klein gewachsen"], ["óženjen", "verheiratet (Mann)"], ["údata", "verheiratet (Frau)"], ["zájedno", "zusammen"],
+      ["vóleti", "lieben / mögen"], ["ímati", "haben"], ["živéti", "leben / wohnen"], ["mój", "mein"], ["tvój", "dein"], ["náš", "unser"], ["váš", "euer / Ihr"]
+    ],
+    sentences: [
+      ["Óvo je mója pórodica.", "Das ist meine Familie."],
+      ["Óvo je mója žéna.", "Das ist meine Frau."],
+      ["Óvo je mój múž.", "Das ist mein Mann."],
+      ["Imám dvóje déce.", "Ich habe zwei Kinder."],
+      ["Imám sína i ćérku.", "Ich habe einen Sohn und eine Tochter."],
+      ["Mój ótac živi u Béogradu.", "Mein Vater lebt in Belgrad."],
+      ["Imáš li bráta ili séstru?", "Hast du einen Bruder oder eine Schwester?"],
+      ["Kóliko imáte déce?", "Wie viele Kinder haben Sie?"],
+      ["Móji róditelji su dívni.", "Meine Eltern sind wunderbar."],
+      ["Mója súpruga se zóve Mílena.", "Meine Frau heißt Milena."]
+    ]
+  },
 
-  // Reisen
-  ["putovanje", "Reise", "pu-TO-wa-nje", "Reisen"],
-  ["aerodrom", "Flughafen", "A-e-ro-drom", "Reisen"],
-  ["voz", "Zug", "wos", "Reisen"],
-  ["autobus", "Bus", "A-u-to-bus", "Reisen"],
-  ["taksi", "Taxi", "TAK-ßi", "Reisen"],
-  ["hotel", "Hotel", "HO-tel", "Reisen"],
-  ["soba", "Zimmer", "ßO-ba", "Reisen"],
-  ["karta", "Fahrkarte / Karte", "KAR-ta", "Reisen"],
-  ["pasoš", "Reisepass", "PA-ßosch", "Reisen"],
-  ["kofer", "Koffer", "KO-fer", "Reisen"],
-  ["mapa", "Landkarte / Plan", "MA-pa", "Reisen"],
-  ["grad", "Stadt", "grad", "Reisen"],
-  ["ulica", "Straße", "U-li-za", "Reisen"],
-  ["more", "Meer", "MO-re", "Reisen"],
-  ["planina", "Berg", "PLA-ni-na", "Reisen"],
-  ["levo", "links", "LE-wo", "Reisen"],
-  ["desno", "rechts", "DES-no", "Reisen"],
-  ["pravo", "geradeaus", "PRA-wo", "Reisen"],
+  // ------------------------------------------------------------------ 4
+  {
+    id: 4,
+    title: "Smalltalk: Wetter, Gefühle, Hobbys",
+    goal: "Ein Gespräch beginnen: Wetter, Befinden und Freizeit.",
+    dialog: [
+      ["Agent", "Lépo vréme dánas, zar ne?", "Schönes Wetter heute, nicht wahr?"],
+      ["Kupac", "Da, vrlo lépo. Nije hládno.", "Ja, sehr schön. Es ist nicht kalt."],
+      ["Agent", "Šta vólite da rádite u slóbodno vréme?", "Was machen Sie gern in Ihrer Freizeit?"],
+      ["Kupac", "Vólim da plívam i čítam.", "Ich schwimme und lese gern."],
+      ["Agent", "Ódlično! Ja vólim fúdbal.", "Ausgezeichnet! Ich mag Fußball."]
+    ],
+    grammar: {
+      title: "Verneinung und „gern tun“",
+      text: [
+        "Verneinung: „ne“ steht vor dem Verb (ne razumem). „je“ wird zu „nije“, „sam“ zu „nisam“: Hladno je. – Nije hladno. Gladan sam. – Nisam gladan.",
+        "Gern tun: voleti + da + Verb (Präsens). Volim da plivam = Ich schwimme gern. Volim da čitam = Ich lese gern."
+      ]
+    },
+    words: [
+      ["kíša", "Regen"], ["súnce", "Sonne"], ["snég", "Schnee"], ["vétar", "Wind"], ["óblak", "Wolke"], ["tóplo", "warm"],
+      ["hládno", "kalt"], ["vrúće", "heiß"], ["súnčano", "sonnig"], ["óblačno", "bewölkt"], ["sréćan", "glücklich"], ["túžan", "traurig"],
+      ["umóran", "müde"], ["gládan", "hungrig"], ["žédan", "durstig"], ["zadovóljan", "zufrieden"], ["ljút", "wütend"], ["véseo", "fröhlich"],
+      ["hóbi", "Hobby"], ["múzika", "Musik"], ["fílm", "Film"], ["knjíga", "Buch"], ["spórt", "Sport"], ["fúdbal", "Fußball"],
+      ["šétnja", "Spaziergang"], ["kúvanje", "Kochen"], ["čítati", "lesen"], ["slúšati", "hören / zuhören"], ["glédati", "anschauen"],
+      ["ígrati", "spielen"], ["plívati", "schwimmen"], ["pévati", "singen"], ["tŕčati", "laufen"], ["vóziti", "fahren"],
+      ["lépo", "schön"], ["zanimljívo", "interessant"], ["téško", "schwer"], ["láko", "leicht"], ["mnógo", "viel"], ["málo", "wenig"],
+      ["vŕlo", "sehr"], ["móžda", "vielleicht"], ["náravno", "natürlich"], ["táčno", "genau / richtig"], ["u rédu", "in Ordnung"],
+      ["báš", "genau / echt"], ["áli", "aber"], ["í", "und"], ["íli", "oder"], ["jér", "weil"]
+    ],
+    sentences: [
+      ["Kákvo je vréme dánas?", "Wie ist das Wetter heute?"],
+      ["Dánas je lépo vréme.", "Heute ist schönes Wetter."],
+      ["Páda kíša.", "Es regnet."],
+      ["Hládno je.", "Es ist kalt."],
+      ["Šta vóliš da rádiš u slóbodno vréme?", "Was machst du gern in deiner Freizeit?"],
+      ["Vólim múziku i fúdbal.", "Ich mag Musik und Fußball."],
+      ["Žédan sam.", "Ich habe Durst."],
+      ["Umóran sam.", "Ich bin müde."],
+      ["Vrlo je zanimljívo!", "Das ist sehr interessant!"],
+      ["Nije hládno.", "Es ist nicht kalt."]
+    ]
+  },
 
-  // Einkaufen
-  ["prodavnica", "Geschäft", "PRO-daw-ni-za", "Einkaufen"],
-  ["pijaca", "Markt", "PI-ja-za", "Einkaufen"],
-  ["novac", "Geld", "NO-waz", "Einkaufen"],
-  ["cena", "Preis", "ZE-na", "Einkaufen"],
-  ["skupo", "teuer", "ßKU-po", "Einkaufen"],
-  ["jeftino", "billig", "JEF-ti-no", "Einkaufen"],
-  ["račun", "Rechnung", "RA-tschun", "Einkaufen"],
-  ["kesa", "Tasche / Sackerl", "KE-ßa", "Einkaufen"],
+  // ------------------------------------------------------------------ 5
+  {
+    id: 5,
+    title: "Essen & Trinken",
+    goal: "Im Restaurant und Café bestellen und bezahlen.",
+    dialog: [
+      ["Konobar", "Dóbro véče. Izvólite?", "Guten Abend. Bitte schön?"],
+      ["Gost", "Stó za dvóje, mólim.", "Einen Tisch für zwei, bitte."],
+      ["Konobar", "Izvólite. Evo jélovnik.", "Bitte sehr. Hier ist die Speisekarte."],
+      ["Gost", "Hvála. Jédnu súpu i pilétinu, mólim.", "Danke. Eine Suppe und das Hühnchen, bitte."],
+      ["Konobar", "A za píti?", "Und zu trinken?"],
+      ["Gost", "Vódu i jédno pívo.", "Wasser und ein Bier."],
+      ["Konobar", "Prijátno!", "Guten Appetit!"]
+    ],
+    grammar: {
+      title: "Bestellen: die Endung -u",
+      text: [
+        "Beim Bestellen wird bei Wörtern auf -a die Endung zu -u: kafa → kafu, supa → supu, piletina → piletinu. Jednu kafu, molim.",
+        "Männliche und sächliche Wörter bleiben meist gleich: jedno pivo, jedan sok, hleb."
+      ]
+    },
+    words: [
+      ["hrána", "Essen / Nahrung"], ["píće", "Getränk"], ["dóručak", "Frühstück"], ["rúčak", "Mittagessen"], ["véčera", "Abendessen"],
+      ["restóran", "Restaurant"], ["jélovnik", "Speisekarte"], ["kónobar", "Kellner"], ["ráčun", "Rechnung"], ["hléb", "Brot"],
+      ["mléko", "Milch"], ["sír", "Käse"], ["jáje", "Ei"], ["méso", "Fleisch"], ["pilétina", "Hühnerfleisch"], ["svinjétina", "Schweinefleisch"],
+      ["ríba", "Fisch"], ["súpa", "Suppe"], ["saláta", "Salat"], ["krómpir", "Kartoffel"], ["pirínač", "Reis"], ["téstenina", "Nudeln"],
+      ["póvrće", "Gemüse"], ["vóće", "Obst"], ["jábuka", "Apfel"], ["paradájz", "Paradeiser"], ["lúk", "Zwiebel"], ["só", "Salz"],
+      ["bíber", "Pfeffer"], ["šéćer", "Zucker"], ["káfa", "Kaffee"], ["čáj", "Tee"], ["vóda", "Wasser"], ["sók", "Saft"], ["pívo", "Bier"],
+      ["víno", "Wein"], ["rákija", "Obstbrand"], ["kólač", "Kuchen"], ["sládoled", "Eis"], ["úkusno", "lecker"], ["sláno", "salzig"],
+      ["slátko", "süß"], ["jésti", "essen"], ["píti", "trinken"], ["narúčiti", "bestellen"], ["plátiti", "bezahlen"], ["fláša", "Flasche"],
+      ["čáša", "Glas"], ["tánjir", "Teller"], ["nóž", "Messer"]
+    ],
+    sentences: [
+      ["Stó za dvóje, mólim.", "Einen Tisch für zwei, bitte."],
+      ["Jélovnik, mólim.", "Die Speisekarte, bitte."],
+      ["Šta prepóručujete?", "Was empfehlen Sie?"],
+      ["Jédnu káfu, mólim.", "Einen Kaffee, bitte."],
+      ["Dájte mi vódu, mólim.", "Geben Sie mir bitte Wasser."],
+      ["Ja ću pilétinu i salátu.", "Ich nehme das Hühnchen und den Salat."],
+      ["Prijátno!", "Guten Appetit!"],
+      ["Bílo je vrlo úkusno.", "Es war sehr lecker."],
+      ["Nísam gládan, hvála.", "Ich habe keinen Hunger, danke."],
+      ["Ráčun, mólim.", "Die Rechnung, bitte."]
+    ]
+  },
 
-  // Essen & Trinken
-  ["hleb", "Brot", "chleb", "Essen & Trinken"],
-  ["mleko", "Milch", "MLE-ko", "Essen & Trinken"],
-  ["sir", "Käse", "ßir", "Essen & Trinken"],
-  ["voda", "Wasser", "WO-da", "Essen & Trinken"],
-  ["kafa", "Kaffee", "KA-fa", "Essen & Trinken"],
-  ["čaj", "Tee", "tschaj", "Essen & Trinken"],
-  ["pivo", "Bier", "PI-wo", "Essen & Trinken"],
-  ["vino", "Wein", "WI-no", "Essen & Trinken"],
-  ["supa", "Suppe", "ßU-pa", "Essen & Trinken"],
-  ["salata", "Salat", "ßa-LA-ta", "Essen & Trinken"],
-  ["meso", "Fleisch", "ME-ßo", "Essen & Trinken"],
-  ["riba", "Fisch", "RI-ba", "Essen & Trinken"],
-  ["piletina", "Hühnerfleisch", "PI-le-ti-na", "Essen & Trinken"],
-  ["jaje", "Ei", "JA-je", "Essen & Trinken"],
-  ["voće", "Obst", "WO-tje", "Essen & Trinken"],
-  ["povrće", "Gemüse", "PO-wr-tje", "Essen & Trinken"],
-  ["so", "Salz", "ßo", "Essen & Trinken"],
-  ["šećer", "Zucker", "SCHE-tjer", "Essen & Trinken"],
+  // ------------------------------------------------------------------ 6
+  {
+    id: 6,
+    title: "Einkaufen & Geld",
+    goal: "Einkaufen: nach dem Preis fragen, Farben, Kleidung, bezahlen.",
+    dialog: [
+      ["Prodavac", "Izvólite?", "Bitte schön?"],
+      ["Kupac", "Trážim plávu kóšulju.", "Ich suche ein blaues Hemd."],
+      ["Prodavac", "Kója veličína?", "Welche Größe?"],
+      ["Kupac", "Véliku, mólim.", "Eine große, bitte."],
+      ["Prodavac", "Izvólite. Kóšta dvádeset évra.", "Bitte sehr. Es kostet zwanzig Euro."],
+      ["Kupac", "Dóbro, úzeću je.", "Gut, ich nehme es."]
+    ],
+    grammar: {
+      title: "Adjektive: männlich, weiblich, sächlich",
+      text: [
+        "Das Adjektiv richtet sich nach dem Hauptwort: nov stan (männlich) – nova kuća (weiblich, Endung -a) – novo dete (sächlich, Endung -o).",
+        "So auch bei Farben: crven kaput – crvena jakna – crveno dete."
+      ]
+    },
+    words: [
+      ["pródavnica", "Geschäft"], ["píjaca", "Markt"], ["súpermarket", "Supermarkt"], ["kása", "Kassa"], ["nóvac", "Geld"], ["céna", "Preis"],
+      ["gotóvina", "Bargeld"], ["kártica", "Bankomatkarte"], ["évro", "Euro"], ["dínar", "Dinar"], ["pópust", "Rabatt"], ["jéftin", "billig"],
+      ["skúp", "teuer"], ["besplátno", "gratis"], ["késa", "Sackerl"], ["tórba", "Tasche"], ["kilógram", "Kilogramm"], ["lítar", "Liter"],
+      ["kómad", "Stück"], ["veličína", "Größe"], ["bója", "Farbe"], ["cŕven", "rot"], ["pláv", "blau"], ["zélen", "grün"], ["žút", "gelb"],
+      ["cŕn", "schwarz"], ["béo", "weiß"], ["sív", "grau"], ["nóv", "neu"], ["ódeća", "Kleidung"], ["cípele", "Schuhe"], ["kóšulja", "Hemd"],
+      ["pantalóne", "Hose"], ["jákna", "Jacke"], ["kúpiti", "kaufen"], ["pródati", "verkaufen"], ["trážiti", "suchen / verlangen"],
+      ["úzeti", "nehmen"], ["próbati", "probieren / anprobieren"], ["kóštati", "kosten"], ["trébati", "brauchen"], ["otvóreno", "geöffnet"],
+      ["zatvóreno", "geschlossen"], ["óvo", "dieses"], ["tó", "das"], ["jóš", "noch"], ["své", "alles"], ["néšto", "etwas"], ["sámo", "nur"],
+      ["préviše", "zu viel"]
+    ],
+    sentences: [
+      ["Kóliko kóšta óvo?", "Was kostet das?"],
+      ["Préviše je skúpo.", "Das ist zu teuer."],
+      ["Imáte li néšto jéftinije?", "Haben Sie etwas Günstigeres?"],
+      ["Úzeću óvo.", "Ich nehme das."],
+      ["Mógu li da plátim kárticom?", "Kann ich mit Karte zahlen?"],
+      ["Sámo gotóvinom.", "Nur bar."],
+      ["Imáte li óvo u véćoj veličíni?", "Haben Sie das in einer größeren Größe?"],
+      ["Trážim plávu jáknu.", "Ich suche eine blaue Jacke."],
+      ["Mógu li da próbam?", "Kann ich es anprobieren?"],
+      ["To je sve, hvála.", "Das ist alles, danke."]
+    ]
+  },
 
-  // Zeit
-  ["danas", "heute", "DA-naß", "Zeit"],
-  ["sutra", "morgen", "ßU-tra", "Zeit"],
-  ["juče", "gestern", "JU-tsche", "Zeit"],
-  ["sada", "jetzt", "ßA-da", "Zeit"],
-  ["jutro", "Morgen (Tageszeit)", "JU-tro", "Zeit"],
-  ["veče", "Abend", "WE-tsche", "Zeit"],
-  ["noć", "Nacht", "notj", "Zeit"],
-  ["sat", "Stunde / Uhr", "ßat", "Zeit"],
-  ["ponedeljak", "Montag", "po-NE-de-ljak", "Zeit"],
-  ["utorak", "Dienstag", "U-to-rak", "Zeit"],
-  ["sreda", "Mittwoch", "ßRE-da", "Zeit"],
-  ["četvrtak", "Donnerstag", "TSCHET-wr-tak", "Zeit"],
-  ["petak", "Freitag", "PE-tak", "Zeit"],
-  ["subota", "Samstag", "ßU-bo-ta", "Zeit"],
-  ["nedelja", "Sonntag", "NE-de-lja", "Zeit"],
+  // ------------------------------------------------------------------ 7
+  {
+    id: 7,
+    title: "Reisen & Verkehr",
+    goal: "Unterwegs: Fahrkarten kaufen, nach dem Weg fragen, sich orientieren.",
+    dialog: [
+      ["Putnik", "Dóbar dan. Jédna kárta za Béograd, mólim.", "Guten Tag. Eine Fahrkarte nach Belgrad, bitte."],
+      ["Službenik", "Kada putújete?", "Wann reisen Sie?"],
+      ["Putnik", "Sútra ujútru.", "Morgen früh."],
+      ["Službenik", "Vóz pólazi u ósam sáti.", "Der Zug fährt um acht Uhr ab."],
+      ["Putnik", "Kóliko kóšta?", "Was kostet es?"],
+      ["Službenik", "Dvádeset évra.", "Zwanzig Euro."]
+    ],
+    grammar: {
+      title: "Wohin? Wo? Woher?",
+      text: [
+        "Wohin: u + Akkusativ – Idem u Beč. / Idem u Beograd.",
+        "Wo: u + Lokativ – Živim u Beču. / Živim u Beogradu.",
+        "Woher: iz + Genitiv – Ja sam iz Beča. / Ja sam iz Beograda. Für: za + Akkusativ – karta za Beograd."
+      ]
+    },
+    words: [
+      ["putóvanje", "Reise"], ["pút", "Weg / Reise"], ["áerodrom", "Flughafen"], ["stánica", "Station / Haltestelle"], ["vóz", "Zug"],
+      ["áutobus", "Bus"], ["táksi", "Taxi"], ["automóbil", "Auto"], ["kóla", "Auto (Mehrzahl)"], ["vózač", "Fahrer"], ["kárta", "Fahrkarte / Karte"],
+      ["pásoš", "Reisepass"], ["kófer", "Koffer"], ["mápa", "Plan / Landkarte"], ["úlica", "Straße"], ["tŕg", "Platz"], ["móst", "Brücke"],
+      ["grád", "Stadt"], ["sélo", "Dorf"], ["gránica", "Grenze"], ["pólazak", "Abfahrt"], ["dólazak", "Ankunft"], ["lévo", "links"],
+      ["désno", "rechts"], ["právo", "geradeaus"], ["blízu", "nahe"], ["dáleko", "weit"], ["nápred", "vorwärts"], ["názad", "zurück"],
+      ["góre", "oben"], ["dóle", "unten"], ["íspred", "vor"], ["íza", "hinter"], ["póred", "neben"], ["mésto", "Ort / Platz"],
+      ["pŕtljag", "Gepäck"], ["pútnik", "Reisender"], ["túrista", "Tourist"], ["íći", "gehen"], ["dóći", "kommen"], ["stíći", "ankommen"],
+      ["pútovati", "reisen"], ["čékati", "warten"], ["izgúbiti se", "sich verirren"], ["pítati", "fragen"], ["pokázati", "zeigen"],
+      ["skrénuti", "abbiegen"], ["zaustáviti", "anhalten"], ["sédište", "Sitzplatz"], ["vóžnja", "Fahrt"]
+    ],
+    sentences: [
+      ["Gde je stánica?", "Wo ist die Haltestelle?"],
+      ["Jédna kárta za Béograd, mólim.", "Eine Fahrkarte nach Belgrad, bitte."],
+      ["Kada pólazi vóz?", "Wann fährt der Zug ab?"],
+      ["Kóliko kóšta kárta?", "Was kostet die Fahrkarte?"],
+      ["Gde je áerodrom?", "Wo ist der Flughafen?"],
+      ["Izgúbio sam se.", "Ich habe mich verirrt."],
+      ["Pokážite mi na mápi, mólim.", "Zeigen Sie mir bitte auf dem Plan."],
+      ["Ídite právo, pa lévo.", "Gehen Sie geradeaus, dann links."],
+      ["Skrénite désno.", "Biegen Sie rechts ab."],
+      ["Da li je dáleko?", "Ist es weit?"]
+    ]
+  },
 
-  // Eigenschaften & Verben
-  ["veliko", "groß", "WE-li-ko", "Verben & Adjektive"],
-  ["malo", "klein / wenig", "MA-lo", "Verben & Adjektive"],
-  ["lepo", "schön", "LE-po", "Verben & Adjektive"],
-  ["ružno", "hässlich", "RUZH-no", "Verben & Adjektive"],
-  ["toplo", "warm", "TOP-lo", "Verben & Adjektive"],
-  ["hladno", "kalt", "CHLAD-no", "Verben & Adjektive"],
-  ["voleti", "lieben / mögen", "WO-le-ti", "Verben & Adjektive"],
-  ["jesti", "essen", "JE-ßti", "Verben & Adjektive"],
-  ["piti", "trinken", "PI-ti", "Verben & Adjektive"],
-  ["ići", "gehen", "I-tji", "Verben & Adjektive"],
-  ["kupiti", "kaufen", "KU-pi-ti", "Verben & Adjektive"],
-  ["govoriti", "sprechen", "GO-wo-ri-ti", "Verben & Adjektive"],
-  ["razumeti", "verstehen", "ra-SU-me-ti", "Verben & Adjektive"],
-  ["imati", "haben", "I-ma-ti", "Verben & Adjektive"],
-  ["želeti", "wollen / wünschen", "zhe-LE-ti", "Verben & Adjektive"],
-  ["putovati", "reisen", "PU-to-wa-ti", "Verben & Adjektive"],
-  ["učiti", "lernen", "U-tschi-ti", "Verben & Adjektive"],
-  ["raditi", "arbeiten / machen", "RA-di-ti", "Verben & Adjektive"],
-  ["živeti", "leben / wohnen", "ZHI-we-ti", "Verben & Adjektive"]
-];
+  // ------------------------------------------------------------------ 8
+  {
+    id: 8,
+    title: "Wohnen & Immobilien",
+    goal: "Räume, Besichtigung, Miete und Kauf: das Wichtigste für Wohnungen.",
+    dialog: [
+      ["Agent", "Dóbar dan! Dobrodóšli. Evo, óvo je stán.", "Guten Tag! Willkommen. Hier ist die Wohnung."],
+      ["Kupac", "Hvála. Stán je vrlo svétao!", "Danke. Die Wohnung ist sehr hell!"],
+      ["Agent", "Da, ima tri sóbe, kúhinju i bálkon.", "Ja, sie hat drei Zimmer, eine Küche und einen Balkon."],
+      ["Kupac", "Kóliko je kírija?", "Wie hoch ist die Miete?"],
+      ["Agent", "Kírija je pétsto évra.", "Die Miete beträgt fünfhundert Euro."],
+      ["Kupac", "Dóbro. Mógu li da vídim kupátilo?", "Gut. Kann ich das Bad sehen?"]
+    ],
+    grammar: {
+      title: "Mehrzahl und Zahlen",
+      text: [
+        "Mehrzahl: soba → sobe, stan → stanovi, kuća → kuće.",
+        "Nach 2, 3, 4 steht die Form auf -e: dve sobe, tri sobe. Ab 5 steht die Form auf -a: pet soba, deset soba."
+      ]
+    },
+    words: [
+      ["stán", "Wohnung"], ["kúća", "Haus"], ["sóba", "Zimmer"], ["spávaća sóba", "Schlafzimmer"], ["dnévna sóba", "Wohnzimmer"],
+      ["kúhinja", "Küche"], ["kupátilo", "Bad"], ["tóalet", "WC"], ["balkón", "Balkon"], ["terása", "Terrasse"], ["bášta", "Garten"],
+      ["garáža", "Garage"], ["pódrum", "Keller"], ["sprát", "Stockwerk"], ["líft", "Aufzug"], ["stépenice", "Stiegen"], ["vráta", "Tür"],
+      ["prózor", "Fenster"], ["zíd", "Wand / Mauer"], ["pód", "Boden"], ["króv", "Dach"], ["námeštaj", "Möbel"], ["krévet", "Bett"],
+      ["stólica", "Sessel (Stuhl)"], ["órmar", "Schrank"], ["frižíder", "Kühlschrank"], ["špóret", "Herd"], ["gréjanje", "Heizung"],
+      ["strúja", "Strom"], ["kírija", "Miete"], ["pródaja", "Verkauf"], ["kúpac", "Käufer"], ["vlásnik", "Eigentümer"], ["stánar", "Mieter"],
+      ["adrésa", "Adresse"], ["kvadrát", "Quadratmeter"], ["ugovór", "Vertrag"], ["depózit", "Kaution"], ["ágent", "Makler"],
+      ["nekrétnina", "Immobilie"], ["pógled", "Aussicht"], ["tíh", "ruhig"], ["svétao", "hell"], ["próstran", "geräumig"],
+      ["renóviran", "renoviert"], ["razgledánje", "Besichtigung"], ["iznájmiti", "vermieten / mieten"], ["uséliti se", "einziehen"],
+      ["tróškovi", "Kosten"], ["términ", "Termin"]
+    ],
+    sentences: [
+      ["Imám stán na pródaju.", "Ich habe eine Wohnung zum Verkauf."],
+      ["Stán ima tri sóbe i kúhinju.", "Die Wohnung hat drei Zimmer und eine Küche."],
+      ["Stán je svétao i tíh.", "Die Wohnung ist hell und ruhig."],
+      ["Kóliko ima kvadráta?", "Wie viele Quadratmeter hat sie?"],
+      ["Ima li bálkon?", "Gibt es einen Balkon?"],
+      ["Kóliko je kírija?", "Wie hoch ist die Miete?"],
+      ["Kóliko su tróškovi?", "Wie hoch sind die Kosten?"],
+      ["Móžemo li da zakážemo razgledánje?", "Können wir eine Besichtigung vereinbaren?"],
+      ["Stán je renóviran.", "Die Wohnung ist renoviert."],
+      ["Imámo i garážu.", "Wir haben auch eine Garage."]
+    ]
+  },
 
-const SENTENCES = [
-  // [Serbisch, Deutsch, Aussprache, Kategorie]
-  // Begrüßung & Höflichkeit
-  ["Dobar dan!", "Guten Tag!", "DO-bar dahn", "Begrüßung & Höflichkeit"],
-  ["Dobro jutro!", "Guten Morgen!", "DO-bro JU-tro", "Begrüßung & Höflichkeit"],
-  ["Dobro veče!", "Guten Abend!", "DO-bro WE-tsche", "Begrüßung & Höflichkeit"],
-  ["Laku noć!", "Gute Nacht!", "LA-ku notj", "Begrüßung & Höflichkeit"],
-  ["Zdravo!", "Hallo!", "SDRA-wo", "Begrüßung & Höflichkeit"],
-  ["Ćao!", "Servus! / Tschüss! (locker)", "TJAO", "Begrüßung & Höflichkeit"],
-  ["Doviđenja!", "Auf Wiedersehen!", "DO-wi-dje-nja", "Begrüßung & Höflichkeit"],
-  ["Vidimo se!", "Wir sehen uns! / Bis bald!", "WI-di-mo ße", "Begrüßung & Höflichkeit"],
-  ["Kako ste?", "Wie geht es Ihnen?", "KA-ko ßte", "Begrüßung & Höflichkeit"],
-  ["Kako si?", "Wie geht's dir?", "KA-ko ßi", "Begrüßung & Höflichkeit"],
-  ["Dobro sam, hvala. A vi?", "Mir geht es gut, danke. Und Ihnen?", "DO-bro ßam, CHWA-la. a wi", "Begrüßung & Höflichkeit"],
-  ["Hvala lepo!", "Danke schön!", "CHWA-la LE-po", "Begrüßung & Höflichkeit"],
-  ["Molim vas.", "Bitte. (höflich)", "MO-lim waß", "Begrüßung & Höflichkeit"],
-  ["Izvinite!", "Entschuldigung!", "IS-wi-ni-te", "Begrüßung & Höflichkeit"],
-  ["Nema problema.", "Kein Problem.", "NE-ma PRO-ble-ma", "Begrüßung & Höflichkeit"],
+  // ------------------------------------------------------------------ 9
+  {
+    id: 9,
+    title: "Gesundheit & Körper",
+    goal: "Körperteile benennen, Beschwerden schildern, zum Arzt und in die Apotheke.",
+    dialog: [
+      ["Doktor", "Dóbar dan. Šta vas bóli?", "Guten Tag. Was tut Ihnen weh?"],
+      ["Pacijent", "Bóli me gláva i imám temperatúru.", "Ich habe Kopfschmerzen und Fieber."],
+      ["Doktor", "Od kada?", "Seit wann?"],
+      ["Pacijent", "Od júče.", "Seit gestern."],
+      ["Doktor", "Dóbro. Evo recépta. Odmárajte se.", "Gut. Hier ist das Rezept. Ruhen Sie sich aus."],
+      ["Pacijent", "Hvála, doktóre.", "Danke, Herr Doktor."]
+    ],
+    grammar: {
+      title: "Schmerzen ausdrücken",
+      text: [
+        "Boli me glava = Mir tut der Kopf weh (me = mich). Boli me stomak, boli me ruka.",
+        "Höflich gefragt: Šta vas boli? (vas = Sie). Unter Freunden: Šta te boli? (te = dich)."
+      ]
+    },
+    words: [
+      ["télo", "Körper"], ["gláva", "Kopf"], ["líce", "Gesicht"], ["óko", "Auge"], ["úvo", "Ohr"], ["nós", "Nase"], ["ústa", "Mund"],
+      ["zúb", "Zahn"], ["vrát", "Hals"], ["ráme", "Schulter"], ["rúka", "Hand / Arm"], ["pŕst", "Finger"], ["stómak", "Bauch / Magen"],
+      ["léđa", "Rücken"], ["nóga", "Bein / Fuß"], ["stópalo", "Fußsohle"], ["kóža", "Haut"], ["sŕce", "Herz"], ["kŕv", "Blut"], ["kósa", "Haar"],
+      ["dóktor", "Arzt"], ["lékar", "Arzt (Mediziner)"], ["bólnica", "Krankenhaus"], ["apotéka", "Apotheke"], ["lék", "Medikament"],
+      ["recépt", "Rezept"], ["ból", "Schmerz"], ["glavóbolja", "Kopfschmerzen"], ["temperatúra", "Fieber"], ["prehláda", "Verkühlung"],
+      ["kášalj", "Husten"], ["alérgija", "Allergie"], ["póvreda", "Verletzung"], ["bólestan", "krank"], ["zdráv", "gesund"],
+      ["hítno", "dringend"], ["pómoć", "Hilfe"], ["hítna pómoć", "Rettung (Notarzt)"], ["bóleti", "wehtun"], ["oséćati se", "sich fühlen"],
+      ["prégled", "Untersuchung"], ["osigúranje", "Versicherung"], ["zdrávlje", "Gesundheit"], ["spávati", "schlafen"],
+      ["odmárati se", "sich ausruhen"], ["pomóći", "helfen"], ["léčiti", "behandeln"], ["pózvati", "rufen / anrufen"], ["telefón", "Telefon"],
+      ["ambulánta", "Ambulanz"]
+    ],
+    sentences: [
+      ["Bóli me gláva.", "Ich habe Kopfschmerzen."],
+      ["Bóli me stómak.", "Ich habe Bauchschmerzen."],
+      ["Bólestan sam.", "Ich bin krank."],
+      ["Trébam dóktora.", "Ich brauche einen Arzt."],
+      ["Pózovite hítnu pómoć!", "Rufen Sie die Rettung!"],
+      ["Gde je apotéka?", "Wo ist die Apotheke?"],
+      ["Imám temperatúru.", "Ich habe Fieber."],
+      ["Imám alérgiju.", "Ich habe eine Allergie."],
+      ["Káko se oséćate?", "Wie fühlen Sie sich?"],
+      ["Već mi je bólje.", "Es geht mir schon besser."]
+    ]
+  },
 
-  // Smalltalk & Vorstellung
-  ["Kako se zovete?", "Wie heißen Sie?", "KA-ko ße SO-we-te", "Smalltalk & Vorstellung"],
-  ["Zovem se Herbert.", "Ich heiße Herbert.", "SO-wem ße HER-bert", "Smalltalk & Vorstellung"],
-  ["Drago mi je.", "Freut mich.", "DRA-go mi je", "Smalltalk & Vorstellung"],
-  ["Odakle ste?", "Woher kommen Sie?", "O-da-kle ßte", "Smalltalk & Vorstellung"],
-  ["Ja sam iz Beča.", "Ich bin aus Wien.", "ja ßam is BE-tscha", "Smalltalk & Vorstellung"],
-  ["Govorite li nemački?", "Sprechen Sie Deutsch?", "GO-wo-ri-te li NE-matsch-ki", "Smalltalk & Vorstellung"],
-  ["Govorim malo srpski.", "Ich spreche ein bisschen Serbisch.", "GO-wo-rim MA-lo ßrp-ski", "Smalltalk & Vorstellung"],
-  ["Učim srpski.", "Ich lerne Serbisch.", "U-tschim ßrp-ski", "Smalltalk & Vorstellung"],
-  ["Ne razumem.", "Ich verstehe nicht.", "ne ra-SU-mem", "Smalltalk & Vorstellung"],
-  ["Možete li da ponovite?", "Können Sie das wiederholen?", "MO-zhe-te li da po-NO-wi-te", "Smalltalk & Vorstellung"],
-  ["Govorite sporije, molim vas.", "Sprechen Sie bitte langsamer.", "GO-wo-ri-te SPO-ri-je, MO-lim waß", "Smalltalk & Vorstellung"],
-  ["Čime se bavite?", "Was machen Sie beruflich?", "TSCHI-me ße BA-wi-te", "Smalltalk & Vorstellung"],
-  ["Ja sam agent za nekretnine.", "Ich bin Immobilienmakler.", "ja ßam A-gent sa NE-kret-ni-ne", "Smalltalk & Vorstellung"],
-  ["Lepo vreme danas, zar ne?", "Schönes Wetter heute, nicht wahr?", "LE-po WRE-me DA-naß, sar ne", "Smalltalk & Vorstellung"],
-  ["Drago mi je što smo se upoznali.", "Schön, dass wir uns kennengelernt haben.", "DRA-go mi je schto ßmo ße u-PO-sna-li", "Smalltalk & Vorstellung"],
-
-  // Familie
-  ["Ovo je moja porodica.", "Das ist meine Familie.", "O-wo je MO-ja po-RO-di-za", "Familie"],
-  ["Ovo je moja žena.", "Das ist meine Frau.", "O-wo je MO-ja ZHE-na", "Familie"],
-  ["Ovo je moj muž.", "Das ist mein Mann.", "O-wo je moj muzh", "Familie"],
-  ["Imam dvoje dece.", "Ich habe zwei Kinder.", "I-mam DWO-je DE-ze", "Familie"],
-  ["Imam sina i ćerku.", "Ich habe einen Sohn und eine Tochter.", "I-mam ßI-na i TJER-ku", "Familie"],
-  ["Koliko imate dece?", "Wie viele Kinder haben Sie?", "KO-li-ko I-ma-te DE-ze", "Familie"],
-  ["Moj otac je penzioner.", "Mein Vater ist Pensionist.", "moj O-taz je PEN-si-o-ner", "Familie"],
-  ["Moja majka živi u Beogradu.", "Meine Mutter lebt in Belgrad.", "MO-ja MAJ-ka ZHI-wi u BE-o-gra-du", "Familie"],
-  ["Imam brata i sestru.", "Ich habe einen Bruder und eine Schwester.", "I-mam BRA-ta i ßES-tru", "Familie"],
-  ["Moji roditelji su divni.", "Meine Eltern sind wunderbar.", "MO-ji RO-di-te-lji ßu DIW-ni", "Familie"],
-  ["Da li ste oženjeni?", "Sind Sie verheiratet? (zu einem Mann)", "da li ßte o-ZHE-nje-ni", "Familie"],
-  ["Moja supruga se zove Milena.", "Meine Frau heißt Milena.", "MO-ja ßU-pru-ga ße SO-we MI-le-na", "Familie"],
-  ["Imamo unuke.", "Wir haben Enkelkinder.", "I-ma-mo U-nu-ke", "Familie"],
-  ["Koliko imate godina?", "Wie alt sind Sie?", "KO-li-ko I-ma-te GO-di-na", "Familie"],
-  ["Porodica mi je veoma važna.", "Familie ist mir sehr wichtig.", "po-RO-di-za mi je WE-o-ma WAZH-na", "Familie"],
-
-  // Reisen
-  ["Gde je železnička stanica?", "Wo ist der Bahnhof?", "gde je ZHE-lez-nitsch-ka STA-ni-za", "Reisen"],
-  ["Jedna karta do Beograda, molim.", "Eine Fahrkarte nach Belgrad, bitte.", "JED-na KAR-ta do BE-o-gra-da, MO-lim", "Reisen"],
-  ["Kada polazi voz?", "Wann fährt der Zug ab?", "KA-da PO-la-si wos", "Reisen"],
-  ["Koliko košta karta?", "Was kostet die Fahrkarte?", "KO-li-ko KOSCH-ta KAR-ta", "Reisen"],
-  ["Gde mogu da kupim kartu?", "Wo kann ich eine Karte kaufen?", "gde MO-gu da KU-pim KAR-tu", "Reisen"],
-  ["Tražim hotel.", "Ich suche ein Hotel.", "TRA-zhim HO-tel", "Reisen"],
-  ["Imam rezervaciju.", "Ich habe eine Reservierung.", "I-mam re-ser-WA-zi-ju", "Reisen"],
-  ["Treba mi soba za dvoje.", "Ich brauche ein Zimmer für zwei Personen.", "TRE-ba mi ßO-ba sa DWO-je", "Reisen"],
-  ["Koliko košta noćenje?", "Was kostet eine Übernachtung?", "KO-li-ko KOSCH-ta NO-tje-nje", "Reisen"],
-  ["Da li doručak ulazi u cenu?", "Ist das Frühstück im Preis inbegriffen?", "da li DO-ru-tschak U-la-si u ZE-nu", "Reisen"],
-  ["Gde je toalet?", "Wo ist die Toilette?", "gde je TO-a-let", "Reisen"],
-  ["Izgubio sam se.", "Ich habe mich verirrt.", "IS-gu-bi-o ßam ße", "Reisen"],
-  ["Možete li mi pokazati na mapi?", "Können Sie mir das auf dem Plan zeigen?", "MO-zhe-te li mi PO-ka-sa-ti na MA-pi", "Reisen"],
-  ["Idite pravo, pa levo.", "Gehen Sie geradeaus, dann links.", "I-di-te PRA-wo, pa LE-wo", "Reisen"],
-  ["Skrenite desno.", "Biegen Sie rechts ab.", "SKRE-ni-te DES-no", "Reisen"],
-  ["Da li je daleko?", "Ist es weit?", "da li je DA-le-ko", "Reisen"],
-  ["Putujem službeno.", "Ich reise beruflich.", "PU-tu-jem ßLUZH-be-no", "Reisen"],
-  ["Vaš pasoš, molim.", "Ihren Reisepass, bitte.", "wasch PA-ßosch, MO-lim", "Reisen"],
-  ["Prvi put putujem u Srbiju.", "Ich reise zum ersten Mal nach Serbien.", "PR-wi put PU-tu-jem u SR-bi-ju", "Reisen"],
-  ["Srbija je prelepa zemlja.", "Serbien ist ein wunderschönes Land.", "SR-bi-ja je PRE-le-pa SEM-lja", "Reisen"],
-
-  // Einkaufen
-  ["Koliko košta ovo?", "Was kostet das?", "KO-li-ko KOSCH-ta O-wo", "Einkaufen"],
-  ["Preskupo je.", "Das ist zu teuer.", "PRE-ßku-po je", "Einkaufen"],
-  ["Imate li nešto jeftinije?", "Haben Sie etwas Günstigeres?", "I-ma-te li NESCH-to JEF-ti-ni-je", "Einkaufen"],
-  ["Uzeću ovo.", "Ich nehme das.", "U-se-tju O-wo", "Einkaufen"],
-  ["Mogu li da platim karticom?", "Kann ich mit Karte zahlen?", "MO-gu li da PLA-tim KAR-ti-zom", "Einkaufen"],
-  ["Samo gotovinom.", "Nur bar.", "ßA-mo GO-to-wi-nom", "Einkaufen"],
-  ["Izvolite?", "Bitte schön? / Was darf es sein?", "IS-wo-li-te", "Einkaufen"],
-  ["Samo gledam, hvala.", "Ich schaue nur, danke.", "ßA-mo GLE-dam, CHWA-la", "Einkaufen"],
-  ["Imate li ovo u većoj veličini?", "Haben Sie das in einer größeren Größe?", "I-ma-te li O-wo u WE-tjoj we-LI-tschi-ni", "Einkaufen"],
-  ["Gde je pijaca?", "Wo ist der Markt?", "gde je PI-ja-za", "Einkaufen"],
-  ["Dajte mi kilogram jabuka, molim.", "Geben Sie mir ein Kilo Äpfel, bitte.", "DAJ-te mi KI-lo-gram JA-bu-ka, MO-lim", "Einkaufen"],
-  ["Pola kilograma sira.", "Ein halbes Kilo Käse.", "PO-la KI-lo-gra-ma ßI-ra", "Einkaufen"],
-  ["Treba mi flaša vode.", "Ich brauche eine Flasche Wasser.", "TRE-ba mi FLA-scha WO-de", "Einkaufen"],
-  ["Da li imate hleba?", "Haben Sie Brot?", "da li I-ma-te CHLE-ba", "Einkaufen"],
-  ["Još nešto?", "Noch etwas?", "josch NESCH-to", "Einkaufen"],
-  ["To je sve, hvala.", "Das ist alles, danke.", "to je ßwe, CHWA-la", "Einkaufen"],
-  ["Gde je kasa?", "Wo ist die Kassa?", "gde je KA-ßa", "Einkaufen"],
-  ["Do koliko sati radite?", "Bis wie viel Uhr haben Sie geöffnet?", "do KO-li-ko ßA-ti RA-di-te", "Einkaufen"],
-  ["Mogu li da dobijem račun?", "Kann ich eine Rechnung bekommen?", "MO-gu li da DO-bi-jem RA-tschun", "Einkaufen"],
-  ["Možete li to da zapakujete?", "Können Sie mir das einpacken?", "MO-zhe-te li to da SA-pa-ku-je-te", "Einkaufen"],
-
-  // Restaurant & Alltag
-  ["Sto za dvoje, molim.", "Einen Tisch für zwei, bitte.", "ßto sa DWO-je, MO-lim", "Restaurant & Alltag"],
-  ["Jelovnik, molim.", "Die Speisekarte, bitte.", "JE-low-nik, MO-lim", "Restaurant & Alltag"],
-  ["Šta preporučujete?", "Was empfehlen Sie?", "schta pre-po-RU-tschu-je-te", "Restaurant & Alltag"],
-  ["Ja ću piletinu.", "Ich nehme das Hühnchen.", "ja tju PI-le-ti-nu", "Restaurant & Alltag"],
-  ["Jednu kafu, molim.", "Einen Kaffee, bitte.", "JED-nu KA-fu, MO-lim", "Restaurant & Alltag"],
-  ["Pivo, molim.", "Ein Bier, bitte.", "PI-wo, MO-lim", "Restaurant & Alltag"],
-  ["Prijatno!", "Guten Appetit!", "PRI-jat-no", "Restaurant & Alltag"],
-  ["Račun, molim.", "Zahlen, bitte.", "RA-tschun, MO-lim", "Restaurant & Alltag"],
-  ["Bilo je veoma ukusno.", "Es war sehr lecker.", "BI-lo je WE-o-ma u-KUß-no", "Restaurant & Alltag"],
-  ["Koliko je sati?", "Wie spät ist es?", "KO-li-ko je ßA-ti", "Restaurant & Alltag"],
-  ["Danas je lep dan.", "Heute ist ein schöner Tag.", "DA-naß je lep dahn", "Restaurant & Alltag"],
-  ["Šta ima novo?", "Was gibt es Neues?", "schta I-ma NO-wo", "Restaurant & Alltag"],
-  ["Hajde da popijemo kafu.", "Gehen wir einen Kaffee trinken.", "CHAJ-de da po-PI-je-mo KA-fu", "Restaurant & Alltag"],
-  ["Srećan put!", "Gute Reise!", "ßRE-tjan put", "Restaurant & Alltag"],
-  ["Vidimo se uskoro!", "Bis bald!", "WI-di-mo ße U-ßko-ro", "Restaurant & Alltag"]
+  // ------------------------------------------------------------------ 10
+  {
+    id: 10,
+    title: "Arbeit & Alltag",
+    goal: "Büro, Telefon und die wichtigsten Verben und Wörter für den Alltag.",
+    dialog: [
+      ["Agent", "Halo, dóbar dan. Imám jedno pítanje.", "Hallo, guten Tag. Ich habe eine Frage."],
+      ["Kolega", "Izvólite, slúšam.", "Bitte, ich höre."],
+      ["Agent", "Kada je sástanak?", "Wann ist die Besprechung?"],
+      ["Kolega", "Sástanak je sútra u déset.", "Die Besprechung ist morgen um zehn."],
+      ["Agent", "Hvála na pomóći!", "Danke für die Hilfe!"],
+      ["Kolega", "Nema próblema. Doviđénja!", "Kein Problem. Auf Wiedersehen!"]
+    ],
+    grammar: {
+      title: "Können, müssen, wollen – und Fragen mit „li“",
+      text: [
+        "moći, morati, hteti + da + Verb im Präsens: Moram da idem. Mogu da pomognem. Hoću da kupim stan.",
+        "Ja/Nein-Fragen: das Verb + „li“: Možete li da me pozovete? Imate li vremena? Govorite li nemački?"
+      ]
+    },
+    words: [
+      ["pósao", "Arbeit"], ["kancelárija", "Büro"], ["fírma", "Firma"], ["koléga", "Kollege"], ["šéf", "Chef"], ["sástanak", "Besprechung / Termin"],
+      ["póziv", "Anruf"], ["méjl", "E-Mail"], ["póruka", "Nachricht"], ["ínternet", "Internet"], ["račúnar", "Computer"], ["dokúment", "Dokument"],
+      ["pítanje", "Frage"], ["ódgovor", "Antwort"], ["próblem", "Problem"], ["rešénje", "Lösung"], ["idéja", "Idee"], ["ráditi", "arbeiten / machen"],
+      ["želéti", "wünschen / wollen"], ["móći", "können"], ["mórati", "müssen"], ["znáti", "wissen / kennen"], ["htéti", "wollen"], ["dáti", "geben"],
+      ["vídeti", "sehen"], ["čúti", "hören"], ["réći", "sagen"], ["písati", "schreiben"], ["zváti", "rufen / nennen"], ["póčeti", "beginnen"],
+      ["završíti", "beenden"], ["odgovóriti", "antworten"], ["mísliti", "denken"], ["vérovati", "glauben"], ["účiti", "lernen"], ["vážno", "wichtig"],
+      ["mogúće", "möglich"], ["potrébno", "nötig"], ["slóbodno", "frei"], ["záuzet", "beschäftigt"], ["spréman", "bereit"], ["bŕzo", "schnell"],
+      ["poláko", "langsam"], ["ónda", "dann"], ["pónekad", "manchmal"], ["čésto", "oft"], ["rétko", "selten"], ["véć", "schon"], ["ópet", "wieder"],
+      ["záto", "deshalb"]
+    ],
+    sentences: [
+      ["Rádim u kanceláriji.", "Ich arbeite im Büro."],
+      ["Imám važan sástanak.", "Ich habe einen wichtigen Termin."],
+      ["Móžete li da me pózovete?", "Können Sie mich anrufen?"],
+      ["Píšite mi méjl, mólim.", "Schreiben Sie mir bitte eine E-Mail."],
+      ["Imám jedno pítanje.", "Ich habe eine Frage."],
+      ["Nema próblema.", "Kein Problem."],
+      ["Záuzet sam.", "Ich bin beschäftigt."],
+      ["Móram da ídem.", "Ich muss gehen."],
+      ["Mogúće je.", "Es ist möglich."],
+      ["Hvála na pomóći!", "Danke für die Hilfe!"]
+    ]
+  }
 ];
 
 const LEGEND = [
@@ -259,14 +467,14 @@ const LEGEND = [
   ["ć", "weiches tj (zwischen tsch und tj)", "noć → notj"],
   ["š", "sch (wie in „Schule“)", "šest → schest"],
   ["ž", "stimmhaftes sch, wie g in „Garage“ (hier: zh)", "žena → ZHE-na"],
-  ["đ", "weiches dj (wie englisch „Jeans“, weicher)", "doviđenja → DO-wi-dje-nja"],
+  ["đ", "weiches dj (wie in englisch „Jeans“, weicher)", "doviđenja → DO-wi-dje-nja"],
   ["dž", "dsch (wie in „Dschungel“)", "džep → dschep"],
   ["j", "j (wie in „Jahr“)", "jaje → JA-je"],
-  ["lj", "weiches l, wie in „Familie“ (it. gli)", "prijatelj → PRI-ja-telj"],
+  ["lj", "weiches l, wie in „Familie“ (italienisch gli)", "prijatelj → PRI-ja-telj"],
   ["nj", "weiches n, wie in „Cognac“", "doviđenja → …nja"],
   ["h", "ch (wie in „Bach“)", "hvala → CHWA-la"],
   ["v", "w (wie in „Wasser“)", "voda → WO-da"],
   ["s", "immer stimmlos, wie ß (hier: ß)", "sat → ßat"],
   ["z", "stimmhaftes s (wie in „Sonne“, hier: s)", "voz → wos"],
-  ["r", "gerollt (Zungenspitzen-R); kann Silbe bilden", "Srbija → SR-bi-ja"]
+  ["r", "gerollt (Zungenspitzen-R); kann eine Silbe bilden", "Srbija → SR-bi-ja"]
 ];

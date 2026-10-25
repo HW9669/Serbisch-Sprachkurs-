@@ -89,6 +89,40 @@
   .item .d { color: var(--muted); font-size: .92rem; }
   .item .m { color: var(--accent); font-size: .88rem; font-weight: 600; margin-top: 4px; }
 
+  .next h2 { font-size: 1.3rem; margin: 2px 0 4px; }
+  .next p { margin: 0 0 12px; }
+  .lnum {
+    display: inline-block; min-width: 1.7em; text-align: center; margin-right: 4px; padding: 0 4px;
+    border-radius: 6px; background: var(--accent); color: var(--accent-ink); font-variant-numeric: tabular-nums;
+  }
+
+  /* Lektion: Schritte */
+  .steps { list-style: none; margin: 12px 0; padding: 0; display: grid; gap: 8px; }
+  .step {
+    display: grid; grid-template-columns: 2.2em 1fr; column-gap: 10px; align-items: center; width: 100%;
+    text-align: left; font: inherit; color: var(--text); background: var(--surface);
+    border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; cursor: pointer;
+  }
+  .step:hover { border-color: var(--accent); }
+  .step .no {
+    grid-row: span 2; width: 2em; height: 2em; border-radius: 50%; display: grid; place-items: center;
+    border: 2px solid var(--line); font-weight: 700; color: var(--muted);
+  }
+  .step.done .no { background: var(--good-bg); border-color: var(--good); color: var(--good); }
+  .step .lbl { font-weight: 650; }
+  .step .inf { color: var(--muted); font-size: .9rem; grid-column: 2; }
+
+  /* Dialog */
+  .dlg { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+  .dlg li { padding: 10px 14px; border-radius: 12px; border: 1px solid var(--line); display: grid; gap: 2px; justify-items: start; }
+  .dlg li.p1 { margin-left: 12%; }
+  .dlg li.p0 { margin-right: 12%; }
+  .dlg li.now { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent); }
+  .dlg .who { color: var(--muted); font-size: .8rem; text-transform: uppercase; letter-spacing: .06em; }
+  .dlg .sr { font-weight: 650; font-size: 1.1rem; }
+  .qtype { color: var(--muted); font-size: .85rem; text-transform: uppercase; letter-spacing: .06em; margin-top: 4px; }
+  .fb-line { margin: 4px 0; }
+
   /* Karteikarte & Quiz */
   .card {
     min-height: 230px; display: flex; flex-direction: column; align-items: center; justify-content: center;

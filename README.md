@@ -1,29 +1,38 @@
 # Serbisch für Anfänger
 
-Kostenloser Einsteigerkurs Serbisch für deutschsprachige Lernende – komplett in **lateinischer Schrift** (kein Kyrillisch), mit Lautschrift für **österreichisches Deutsch**.
+Einsteigerkurs Serbisch für deutschsprachige Lernende, aufgebaut wie ein Sprachkurs: **10 Lektionen, 500 Vokabeln, 100 Alltagssätze**. Alles in **lateinischer Schrift** (kein Kyrillisch), mit Lautschrift für **österreichisches Deutsch**.
 
-## Inhalt
+## Lektionen
 
-- **Hauptmenü** mit empfohlenem Lernweg: Wörter lernen, Sätze lernen, Vokabelquiz, Satzquiz, Hören & Verstehen, Wiederholen, Nachschlagen
-- **Ton automatisch** – jedes neue Wort und jeder neue Satz wird vorgesprochen (Stimme, Tempo und Ein/Aus in den Einstellungen)
-- **Wortschatz-Trainer** – 118 Wörter als Karteikarten, nach Themen filterbar, Fortschritt wird im Browser gespeichert
-- **Vokabelquiz** – 10 Multiple-Choice-Fragen, in beide Richtungen
-- **100 Alltagssätze** – Begrüßung, Smalltalk, Familie, Reisen, Einkaufen, Restaurant
-- **Aussprache-Legende** – č, ć, š, ž, đ, lj, nj usw. in deutscher Lautschrift
-- 🔊 Vorlesen über die Sprachausgabe des Browsers (abhängig von den installierten Stimmen)
+| # | Thema |
+|---|---|
+| 1 | Begrüßung & Vorstellung |
+| 2 | Zahlen, Zeit & Wochentage |
+| 3 | Familie & Menschen |
+| 4 | Smalltalk: Wetter, Gefühle, Hobbys |
+| 5 | Essen & Trinken |
+| 6 | Einkaufen & Geld |
+| 7 | Reisen & Verkehr |
+| 8 | Wohnen & Immobilien |
+| 9 | Gesundheit & Körper |
+| 10 | Arbeit & Alltag |
 
-Sprachvariante: Standardserbisch (ekavisch, wie in Serbien).
+Jede Lektion hat sechs Schritte: Dialog hören, 50 Vokabeln (in Blöcken zu 10), 10 Sätze, Grammatik-Tipp, drei Übungen (Vokabelquiz, Hören & Verstehen, Lückentext) und einen Lektionstest (ab 80 % bestanden).
+
+## Ton
+
+Jedes neue Wort, jeder neue Satz und jeder Dialog wird automatisch vorgesprochen. Der Ton kommt aus der Sprachausgabe des Browsers; die Stimme kann in den Einstellungen gewählt werden. Ohne installierte serbische Stimme wird ersatzweise eine kroatische oder bosnische verwendet.
 
 ## Benutzen
 
-Lokal einfach `index.html` im Browser öffnen – es wird kein Server und keine Installation benötigt.
-
-Als Webseite: In den GitHub-Einstellungen unter *Pages* den Branch auswählen, der diese Dateien enthält.
+`index.html` im Browser öffnen, es wird kein Server benötigt. Als Webseite: in den GitHub-Einstellungen unter *Pages* den Branch auswählen. Der Lernfortschritt wird im Browser gespeichert.
 
 ## Dateien
 
 | Datei | Zweck |
 |---|---|
 | `index.html` | Oberfläche und Styling |
-| `app.js` | Trainer, Quiz, Satzliste |
-| `data.js` | Wortschatz, Sätze, Aussprache-Legende (hier erweitern) |
+| `app.js` | Menü, Lektionen, Karten, Übungen, Ton |
+| `data.js` | Alle Lektionen (hier erweitern oder korrigieren) |
+
+In `data.js` steht die Betonung als Akzent auf dem betonten Vokal (á é í ó ú, ŕ). Daraus entstehen die normale Schreibweise und die Lautschrift automatisch.
