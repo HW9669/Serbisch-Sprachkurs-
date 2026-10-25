@@ -4,6 +4,8 @@ Kostenloser Einsteigerkurs Serbisch für deutschsprachige Lernende – komplett 
 
 ## Inhalt
 
+- **Hauptmenü** mit empfohlenem Lernweg: Wörter lernen, Sätze lernen, Vokabelquiz, Satzquiz, Hören & Verstehen, Wiederholen, Nachschlagen
+- **Ton automatisch** – jedes neue Wort und jeder neue Satz wird vorgesprochen (Stimme, Tempo und Ein/Aus in den Einstellungen)
 - **Wortschatz-Trainer** – 118 Wörter als Karteikarten, nach Themen filterbar, Fortschritt wird im Browser gespeichert
 - **Vokabelquiz** – 10 Multiple-Choice-Fragen, in beide Richtungen
 - **100 Alltagssätze** – Begrüßung, Smalltalk, Familie, Reisen, Einkaufen, Restaurant
