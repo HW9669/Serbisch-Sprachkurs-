@@ -4,7 +4,7 @@
   const app = document.getElementById("app");
   const backBtn = document.getElementById("back");
   const crumb = document.getElementById("crumb");
-  const STORE = "serbisch-kurs-v3";
+  const STORE = "serbisch-kurs-v4";
   const PASS = 80; // Prozent für „bestanden“
 
   // ---------- Text: Betonungszeichen entfernen, Lautschrift erzeugen ----------
@@ -54,16 +54,19 @@
   const pron = (s) => s.normalize("NFC").replace(/[\p{L}]+/gu, wordPron);
 
   // ---------- Daten aufbereiten ----------
-  const mkItem = (kind, lesson, i, r) => ({
-    key: kind + ":" + clean(r[0]), kind: kind, lesson: lesson, n: i + 1,
+  const mkItem = (kind, chapter, group, i, r) => ({
+    key: kind + ":" + clean(r[0]), kind: kind, lesson: chapter, group: group, n: i + 1,
     sr: clean(r[0]), de: r[1], pr: pron(r[0])
   });
-  const LES = LESSONS.map((L) => ({
-    id: L.id, title: L.title, goal: L.goal, grammar: L.grammar,
-    W: L.words.map((r, i) => mkItem("w", L.id, i, r)),
-    SN: L.sentences.map((r, i) => mkItem("s", L.id, i, r)),
-    D: L.dialog.map((r) => ({ who: r[0], sr: clean(r[1]), de: r[2], pr: pron(r[1]) }))
-  }));
+  const LES = CHAPTERS.map((C) => {
+    const groups = C.groups.map((g, gi) => ({ title: g.title, items: g.words.map((r, i) => mkItem("w", C.id, gi, i, r)) }));
+    return {
+      id: C.id, part: C.part, title: C.title, goal: C.goal, grammar: C.grammar, groups: groups,
+      W: [].concat.apply([], groups.map((g) => g.items)),
+      SN: C.sentences.map((r, i) => mkItem("s", C.id, 0, i, r)),
+      D: C.dialogs.map((d) => ({ title: d.title, lines: d.lines.map((r) => ({ who: clean(r[0]), sr: clean(r[1]), de: r[2], pr: pron(r[1]) })) }))
+    };
+  });
   const ALLW = [].concat.apply([], LES.map((L) => L.W));
   const ALLS = [].concat.apply([], LES.map((L) => L.SN));
   const ALL = ALLW.concat(ALLS);
@@ -75,9 +78,14 @@
   S.known = S.known || {};
   S.weak = S.weak || {};
   S.les = S.les || {};
-  S.set = Object.assign({ auto: true, slow: false, voice: "" }, S.set);
+  S.set = Object.assign({ auto: true, slow: false, voice: "", dlgRate: 0.7, dlgAuto: true, dlgPause: true }, S.set);
   const persist = () => { try { localStorage.setItem(STORE, JSON.stringify(S)); } catch (e) { /* ohne Speicher weiterarbeiten */ } };
-  const prog = (id) => { S.les[id] = S.les[id] || { dlg: false, gram: false, best: {} }; S.les[id].best = S.les[id].best || {}; return S.les[id]; };
+  const prog = (id) => {
+    S.les[id] = S.les[id] || { dlg: {}, gram: false, best: {} };
+    S.les[id].best = S.les[id].best || {};
+    if (typeof S.les[id].dlg !== "object") S.les[id].dlg = {};
+    return S.les[id];
+  };
 
   // ---------- Hilfsfunktionen ----------
   const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -141,29 +149,20 @@
     setTimeout(() => synth.speak(u), 40);
   }
   const autoSay = (text) => { if (S.set.auto) say(text); };
-  function sayLines(lines, onLine) { // lines: [{text, pitch}]
-    if (!synth) return;
-    synth.cancel();
-    setTimeout(() => {
-      lines.forEach((l, i) => {
-        const u = makeUtterance(l.text, false, l.pitch);
-        u.onstart = () => { if (onLine) onLine(i); };
-        synth.speak(u);
-      });
-    }, 40);
-  }
   const earBtn = (text, label) =>
     synth ? '<button class="btn ear" data-say="' + esc(text) + '">' + (label || "Anhören") + "</button>" : "";
 
   // ---------- Navigation ----------
-  const TOP = { start: "start", lesson: "lektion", review: "wiederholen", lookup: "nachschlagen", sounds: "aussprache", settings: "einstellungen" };
+  const TOP = { start: "start", chapter: "kapitel", review: "wiederholen", lookup: "nachschlagen", sounds: "aussprache", settings: "einstellungen" };
   let cur = { name: "start", args: {} };
+  let leave = null; // wird beim Verlassen einer Ansicht aufgerufen (z. B. Dialog stoppen)
   function parentOf(c) {
     if (c.args && c.args.back) return c.args.back;
     if (c.name === "start") return null;
     return { name: "start", args: {} };
   }
   function nav(name, args) {
+    if (leave) { leave(); leave = null; }
     if (synth) synth.cancel();
     cur = { name: name, args: args || {} };
     const p = parentOf(cur);
@@ -174,7 +173,7 @@
     window.scrollTo(0, 0);
     try {
       const tok = TOP[name];
-      if (tok) history.replaceState(null, "", "#" + (name === "lesson" ? "lektion" + cur.args.id : tok));
+      if (tok) history.replaceState(null, "", "#" + (name === "chapter" ? "kapitel" + cur.args.id : tok));
     } catch (e) { /* ignorieren */ }
   }
   const setCrumb = (t) => { crumb.textContent = t; };
@@ -190,143 +189,243 @@
     }
   });
   const navAttr = (name, args) => 'data-nav="' + name + '"' + (args ? " data-args='" + JSON.stringify(args) + "'" : "");
-  const lessonBack = (id) => ({ name: "lesson", args: { id: id } });
+  const chBack = (id) => ({ name: "chapter", args: { id: id } });
+  const STEPS_TOTAL = 6;
 
-  // ---------- Lektionsstatus ----------
+  // ---------- Kapitelstatus ----------
   function steps(L) {
     const p = prog(L.id), b = p.best;
     const kw = countKnown(L.W), ks = countKnown(L.SN);
+    const heard = L.D.filter((d, i) => p.dlg[i]).length;
+    const need = (n) => Math.ceil(n * PASS / 100);
     return [
-      { key: "dlg", label: "Einstieg: Dialog hören", done: !!p.dlg, info: p.dlg ? "gehört" : "", nav: ["dialog", { id: L.id, back: lessonBack(L.id) }] },
-      { key: "w", label: "Vokabeln lernen", done: kw >= Math.ceil(L.W.length * PASS / 100), info: kw + " von " + L.W.length + " gewusst", nav: ["wcards", { id: L.id, back: lessonBack(L.id) }] },
-      { key: "s", label: "Sätze lernen", done: ks >= Math.ceil(L.SN.length * PASS / 100), info: ks + " von " + L.SN.length + " gewusst", nav: ["scards", { id: L.id, back: lessonBack(L.id) }] },
-      { key: "gram", label: "Grammatik-Tipp", done: !!p.gram, info: p.gram ? "gelesen" : "", nav: ["grammar", { id: L.id, back: lessonBack(L.id) }] },
-      { key: "ex", label: "Übungen", done: ["vocab", "hear", "gap"].every((k) => b[k] !== undefined), info: ["vocab", "hear", "gap"].filter((k) => b[k] !== undefined).length + " von 3 gemacht", nav: ["practice", { id: L.id, back: lessonBack(L.id) }] },
-      { key: "final", label: "Lektionstest", done: (b.final || 0) >= PASS, info: b.final !== undefined ? "Bestwert " + b.final + " %" : "ab " + PASS + " % bestanden", nav: ["test", { id: L.id, back: lessonBack(L.id) }] }
+      { label: "Dialoge hören und nachsprechen", done: heard === L.D.length, info: heard + " von " + L.D.length + " gehört", nav: ["dialogs", { id: L.id, back: chBack(L.id) }] },
+      { label: "Wortschatz lernen", done: kw >= need(L.W.length), info: kw + " von " + L.W.length + " gewusst · " + L.groups.length + " Themengruppen", nav: ["vocab", { id: L.id, back: chBack(L.id) }] },
+      { label: "Sätze lernen", done: ks >= need(L.SN.length), info: ks + " von " + L.SN.length + " gewusst", nav: ["scards", { id: L.id, back: chBack(L.id) }] },
+      { label: "Grammatik-Tipps", done: !!p.gram, info: p.gram ? "gelesen" : "", nav: ["grammar", { id: L.id, back: chBack(L.id) }] },
+      { label: "Übungen", done: ["vocab", "hear", "gap"].every((k) => b[k] !== undefined), info: ["vocab", "hear", "gap"].filter((k) => b[k] !== undefined).length + " von 3 gemacht", nav: ["practice", { id: L.id, back: chBack(L.id) }] },
+      { label: "Kapiteltest", done: (b.final || 0) >= PASS, info: b.final !== undefined ? "Bestwert " + b.final + " %" : "ab " + PASS + " % bestanden", nav: ["test", { id: L.id, back: chBack(L.id) }] }
     ];
   }
   const doneCount = (L) => steps(L).filter((s) => s.done).length;
 
   // ---------- Hauptmenü ----------
   function home() {
-    setCrumb("10 Lektionen · 500 Vokabeln · 100 Sätze · mit Ton");
+    setCrumb(LES.length + " Kapitel · " + ALLW.length.toLocaleString("de-AT") + " Vokabeln · " + ALLS.length + " Sätze · " + LES.reduce((n, L) => n + L.D.length, 0) + " Dialoge");
     const status = voiceStatus();
-    const nextL = LES.filter((L) => doneCount(L) < 6)[0];
+    const nextL = LES.filter((L) => doneCount(L) < STEPS_TOTAL)[0];
     const weak = weakItems().length;
     const startedAny = LES.some((L) => doneCount(L) > 0 || countKnown(L.W) > 0);
+    const parts = [];
+    LES.forEach((L) => { if (parts.indexOf(L.part) < 0) parts.push(L.part); });
     app.innerHTML =
       (status.ok ? "" : '<p class="note">' + esc(status.text) + ' <button class="btn" ' + navAttr("settings") + ">Stimme wählen</button></p>") +
       (nextL
-        ? '<section class="panel next"><div class="muted">' + (startedAny ? "Weiter geht’s mit" : "Hier beginnst du") + '</div><h2>Lektion ' + nextL.id + ": " + esc(nextL.title) + "</h2>" +
-          "<p class=\"muted\">" + esc(nextL.goal) + '</p><button class="btn primary" ' + navAttr("lesson", { id: nextL.id }) + ">" + (startedAny ? "Lektion fortsetzen" : "Lektion 1 starten") + "</button></section>"
-        : '<section class="panel next"><h2>Alle Lektionen abgeschlossen</h2><p class="muted">Wiederhole mit „Wiederholen“ oder starte einzelne Lektionen neu.</p></section>') +
-      '<h2 class="grp">Lektionen</h2><div class="menu">' +
-      LES.map((L) => {
-        const n = doneCount(L);
-        return '<button class="item" ' + navAttr("lesson", { id: L.id }) + '><span class="t"><span class="lnum">' + L.id + "</span> " + esc(L.title) + "</span>" +
-          '<span class="d">' + esc(L.goal) + '</span><span class="m">' + (n === 6 ? "abgeschlossen" : n + " von 6 Schritten") + "</span>" + bar(n, 6) + "</button>";
-      }).join("") + "</div>" +
+        ? '<section class="panel next"><div class="muted">' + (startedAny ? "Weiter geht’s mit" : "Hier beginnst du") + '</div><h2>Kapitel ' + nextL.id + ": " + esc(nextL.title) + "</h2>" +
+          '<p class="muted">' + esc(nextL.goal) + '</p><button class="btn primary" ' + navAttr("chapter", { id: nextL.id }) + ">" + (startedAny ? "Kapitel fortsetzen" : "Mit Kapitel 1 starten") + "</button></section>"
+        : '<section class="panel next"><h2>Alle Kapitel abgeschlossen</h2><p class="muted">Wiederhole mit „Wiederholen“ oder starte einzelne Kapitel neu.</p></section>') +
+      parts.map((part) =>
+        '<h2 class="grp">' + esc(part) + '</h2><div class="menu">' +
+        LES.filter((L) => L.part === part).map((L) => {
+          const n = doneCount(L);
+          return '<button class="item" ' + navAttr("chapter", { id: L.id }) + '><span class="t"><span class="lnum">' + L.id + "</span> " + esc(L.title) + "</span>" +
+            '<span class="d">' + esc(L.goal) + '</span><span class="m">' + (n === STEPS_TOTAL ? "abgeschlossen" : n + " von " + STEPS_TOTAL + " Schritten") + "</span>" + bar(n, STEPS_TOTAL) + "</button>";
+        }).join("") + "</div>").join("") +
       '<h2 class="grp">Zusätzlich</h2><div class="menu">' +
       '<button class="item" ' + navAttr("review") + '><span class="t">Wiederholen</span><span class="d">Alles, was du nicht gewusst hast, noch einmal üben.</span><span class="m">' + (weak ? weak + " offen" : "nichts offen") + "</span></button>" +
-      '<button class="item" ' + navAttr("lookup") + '><span class="t">Nachschlagen</span><span class="d">Alle 500 Wörter und 100 Sätze durchsuchen und anhören.</span></button>' +
+      '<button class="item" ' + navAttr("lookup") + '><span class="t">Nachschlagen</span><span class="d">Alle ' + ALLW.length.toLocaleString("de-AT") + " Wörter und " + ALLS.length + " Sätze durchsuchen und anhören.</span></button>" +
       '<button class="item" ' + navAttr("sounds") + '><span class="t">Aussprache-Hilfe</span><span class="d">č, ć, š, ž, đ und mehr in deutscher Lautschrift.</span></button>' +
-      '<button class="item" ' + navAttr("settings") + '><span class="t">Einstellungen</span><span class="d">Ton, Tempo, Stimme, Fortschritt löschen.</span></button>' +
+      '<button class="item" ' + navAttr("settings") + '><span class="t">Einstellungen</span><span class="d">Ton, Tempo, Dialog-Pausen, Stimme, Fortschritt löschen.</span></button>' +
       "</div>";
   }
 
-  // ---------- Lektion (Übersicht) ----------
-  function lessonView(a) {
+  // ---------- Kapitel (Übersicht) ----------
+  function chapterView(a) {
     const L = lesson(a.id);
-    setCrumb("Lektion " + L.id + " von 10");
+    setCrumb("Kapitel " + L.id + " von " + LES.length);
     const st = steps(L);
     app.innerHTML =
-      '<section class="panel"><h2 style="margin:0 0 4px">Lektion ' + L.id + ": " + esc(L.title) + '</h2><p class="muted" style="margin:0">' + esc(L.goal) + "</p></section>" +
+      '<section class="panel"><h2 style="margin:0 0 4px">Kapitel ' + L.id + ": " + esc(L.title) + '</h2><p class="muted" style="margin:0">' + esc(L.goal) + "</p></section>" +
       '<ol class="steps">' + st.map((s, i) =>
         '<li><button class="step' + (s.done ? " done" : "") + '" ' + navAttr(s.nav[0], s.nav[1]) + '><span class="no">' + (s.done ? "✓" : i + 1) + '</span><span class="lbl">' + esc(s.label) +
         '</span><span class="inf">' + esc(s.info) + "</span></button></li>").join("") + "</ol>" +
-      '<p class="muted">Tipp: Geh die Schritte der Reihe nach durch. Im Lektionstest brauchst du ' + PASS + " %, dann gilt die Lektion als abgeschlossen.</p>";
+      '<p class="muted">Tipp: Geh die Schritte der Reihe nach durch. Im Kapiteltest brauchst du ' + PASS + " %, dann gilt das Kapitel als abgeschlossen.</p>";
   }
 
-  // ---------- Dialog ----------
-  function dialogView(a) {
+  // ---------- Dialoge ----------
+  function dialogsView(a) {
     const L = lesson(a.id);
-    setCrumb("Lektion " + L.id + " · Einstieg");
-    prog(L.id).dlg = true; persist();
+    setCrumb("Kapitel " + L.id + " · Dialoge");
+    const p = prog(L.id);
+    app.innerHTML = '<section class="panel"><h2 style="margin-top:0">Dialoge: ' + esc(L.title) + "</h2>" +
+      '<p class="muted">Zu jedem Dialog hörst du jede Zeile einzeln, danach folgt eine Pause zum Nachsprechen. Alles bleibt sichtbar, die Anzeige läuft mit.</p></section>' +
+      '<div class="menu" style="margin-top:12px">' + L.D.map((d, i) =>
+        '<button class="item" ' + navAttr("dialog", { id: L.id, idx: i, back: { name: "dialogs", args: a } }) + '><span class="t">' + (i + 1) + ". " + esc(d.title) + '</span><span class="d">' + d.lines.length + " Zeilen</span><span class=\"m\">" +
+        (p.dlg[i] ? "gehört" : "noch nicht gehört") + "</span></button>").join("") + "</div>";
+  }
+
+  function dialogView(a) {
+    const L = lesson(a.id), D = L.D[a.idx];
+    setCrumb("Kapitel " + L.id + " · Dialog " + (a.idx + 1) + " von " + L.D.length);
+    prog(L.id).dlg[a.idx] = true; persist();
     const who = [];
-    L.D.forEach((d) => { if (who.indexOf(d.who) < 0) who.push(d.who); });
+    D.lines.forEach((d) => { if (who.indexOf(d.who) < 0) who.push(d.who); });
     app.innerHTML =
-      '<section class="panel"><h2 style="margin-top:0">Dialog: ' + esc(L.title) + "</h2>" +
-      '<p class="muted">Hör zuerst zu, dann sprich die Sätze laut nach. Tippe auf eine Zeile, um sie einzeln zu hören.</p>' +
-      '<div class="actions" style="justify-content:flex-start;margin:0 0 12px"><button class="btn primary" id="play">Ganzen Dialog anhören</button><button class="btn" id="stop">Stopp</button></div>' +
-      '<ul class="dlg">' + L.D.map((d, i) =>
+      '<section class="panel"><h2 style="margin-top:0">' + esc(D.title) + "</h2>" +
+      '<p class="muted">Tippe auf eine Zeile, um dort zu beginnen. Nach jeder Zeile kommt eine Pause: Sprich nach, im gleichen Tempo.</p>' +
+      '<ul class="dlg">' + D.lines.map((d, i) =>
         '<li id="dl' + i + '" class="p' + who.indexOf(d.who) % 2 + '"><span class="who">' + esc(d.who) + '</span><div class="sr">' + esc(d.sr) +
-        '</div><div class="pron">' + esc(d.pr) + "</div><div>" + esc(d.de) + "</div>" + earBtn(d.sr) + "</li>").join("") + "</ul>" +
-      '<div class="actions"><button class="btn primary" ' + navAttr("wcards", { id: L.id, back: lessonBack(L.id) }) + ">Weiter: Vokabeln lernen</button></div></section>";
-    function play() {
-      sayLines(L.D.map((d) => ({ text: d.sr, pitch: who.indexOf(d.who) % 2 ? 0.8 : 1 })), (i) => {
-        L.D.forEach((x, k) => { const el = $("dl" + k); if (el) el.classList.toggle("now", k === i); });
+        '</div><div class="pron">' + esc(d.pr) + "</div><div>" + esc(d.de) + '</div><div class="your">Jetzt du: sprich nach</div></li>').join("") + "</ul>" +
+      (L.D[a.idx + 1] ? '<div class="actions"><button class="btn" ' + navAttr("dialog", { id: L.id, idx: a.idx + 1, back: a.back }) + ">Nächster Dialog</button></div>" : '<div class="actions"><button class="btn primary" ' + navAttr("vocab", { id: L.id, back: chBack(L.id) }) + ">Weiter: Wortschatz</button></div>") +
+      "</section>" +
+      '<div class="dbar" id="dbar"><div class="drow"><button class="btn" id="prev">Zurück</button><button class="btn primary" id="play">Abspielen</button><button class="btn" id="next">Weiter</button></div>' +
+      '<details class="dopt"><summary>Tempo und Pause einstellen</summary><div class="drow small"><label>Tempo <select id="rate"><option value="0.55">sehr langsam</option><option value="0.7">langsam</option><option value="0.85">normal</option></select></label>' +
+      '<label class="chk"><input type="checkbox" id="dauto"> automatisch weiter</label>' +
+      '<label class="chk"><input type="checkbox" id="dpause"> Pause zum Nachsprechen</label></div></details></div>';
+
+    let idx = 0, playing = false, token = 0, timer = null;
+    const n = D.lines.length;
+    const mark2 = (i, wait) => {
+      D.lines.forEach((x, k) => {
+        const el = $("dl" + k);
+        if (!el) return;
+        el.classList.toggle("now", k === i);
+        el.classList.toggle("wait", k === i && !!wait);
       });
+      const el = $("dl" + i);
+      if (el && el.scrollIntoView) el.scrollIntoView({ block: "start", behavior: "smooth" });
+    };
+    const label = () => { const b = $("play"); if (b) b.textContent = playing ? "Pause" : "Abspielen"; };
+    function stop() {
+      token++; clearTimeout(timer); if (synth) synth.cancel();
+      playing = false; label();
+      D.lines.forEach((x, k) => { const el = $("dl" + k); if (el) el.classList.remove("wait"); });
     }
-    $("play").onclick = play;
-    $("stop").onclick = () => { if (synth) synth.cancel(); L.D.forEach((x, k) => { const el = $("dl" + k); if (el) el.classList.remove("now"); }); };
-    if (S.set.auto) play();
+    function after(dur) {
+      const my = token;
+      if (!S.set.dlgAuto) { playing = false; label(); mark2(idx, false); return; }
+      const wait = S.set.dlgPause ? Math.min(10000, Math.max(2500, dur * 1.6 + 900)) : 600;
+      mark2(idx, S.set.dlgPause);
+      timer = setTimeout(() => {
+        if (my !== token) return;
+        if (idx < n - 1) { idx++; speakLine(); } else { playing = false; label(); mark2(-1, false); }
+      }, wait);
+    }
+    function speakLine() {
+      const my = token, d = D.lines[idx];
+      mark2(idx, false);
+      if (!synth) { playing = false; label(); return; }
+      const u = makeUtterance(d.sr, false, who.indexOf(d.who) % 2 ? 0.85 : 1);
+      u.rate = S.set.dlgRate;
+      let start = 0, done = false, fb = null;
+      const est = Math.max(1500, d.sr.length * 120 / u.rate);
+      const finish = () => {
+        if (done || my !== token) return;
+        done = true; clearTimeout(fb);
+        after(start ? Date.now() - start : est);
+      };
+      u.onstart = () => { start = Date.now(); };
+      u.onend = finish; u.onerror = finish;
+      fb = setTimeout(finish, est + 2500);
+      setTimeout(() => { if (my === token) synth.speak(u); }, 60);
+    }
+    function playFrom(i) { stop(); idx = Math.max(0, Math.min(n - 1, i)); playing = true; label(); speakLine(); }
+    $("play").onclick = () => { if (playing) stop(); else playFrom(idx); };
+    $("prev").onclick = () => playFrom(idx - 1);
+    $("next").onclick = () => playFrom(idx + 1);
+    D.lines.forEach((x, i) => { $("dl" + i).addEventListener("click", (e) => { if (!e.target.closest("[data-say]")) playFrom(i); }); });
+    $("rate").value = String(S.set.dlgRate);
+    $("rate").onchange = (e) => { S.set.dlgRate = +e.target.value; persist(); };
+    $("dauto").checked = !!S.set.dlgAuto;
+    $("dauto").onchange = (e) => { S.set.dlgAuto = e.target.checked; persist(); };
+    $("dpause").checked = !!S.set.dlgPause;
+    $("dpause").onchange = (e) => { S.set.dlgPause = e.target.checked; persist(); };
+    leave = stop;
+    if (S.set.auto) setTimeout(() => { if (cur.name === "dialog") playFrom(0); }, 300);
   }
 
   // ---------- Grammatik ----------
   function grammarView(a) {
     const L = lesson(a.id);
-    setCrumb("Lektion " + L.id + " · Grammatik");
+    setCrumb("Kapitel " + L.id + " · Grammatik");
     prog(L.id).gram = true; persist();
     app.innerHTML =
       '<section class="panel"><h2 style="margin-top:0">' + esc(L.grammar.title) + "</h2>" +
       L.grammar.text.map((t) => "<p>" + esc(t) + "</p>").join("") +
-      '<div class="actions"><button class="btn primary" ' + navAttr("practice", { id: L.id, back: lessonBack(L.id) }) + ">Weiter: Übungen</button></div></section>";
+      '<div class="actions"><button class="btn primary" ' + navAttr("practice", { id: L.id, back: chBack(L.id) }) + ">Weiter: Übungen</button></div></section>";
   }
 
-  // ---------- Karteikarten (Übersetzung immer sichtbar) ----------
-  function study(o) {
-    // o: {pool, back, blocks, review}
-    const pool = o.pool;
-    let onlyOpen = false, deck = [], idx = 0, block = 0;
-    const review = !!o.review;
-    const blocks = o.blocks ? Math.ceil(pool.length / 10) : 0;
+  // ---------- Wortschatz: Themengruppen wählen ----------
+  function vocabView(a) {
+    const L = lesson(a.id);
+    setCrumb("Kapitel " + L.id + " · Wortschatz");
+    const kw = countKnown(L.W);
     app.innerHTML =
-      '<div class="panel"><div class="row">' +
-      (blocks ? '<select id="blk" aria-label="Block"><option value="0">Alle ' + pool.length + "</option>" +
-        Array.from({ length: blocks }, (_, i) => '<option value="' + (i + 1) + '">Block ' + (i + 1) + " (" + (i * 10 + 1) + "–" + Math.min((i + 1) * 10, pool.length) + ")</option>").join("") + "</select>" : "") +
-      (review ? "" : '<label class="chk"><input type="checkbox" id="open"> nur offene</label>') + "</div>" +
-      '<div class="muted" id="count"></div><div id="fill"></div>' +
-      '<div class="card" id="card" aria-live="polite"></div>' +
-      '<div class="actions"><button class="btn bad" id="again">Noch unsicher</button><button class="btn" id="skip">Weiter</button><button class="btn good" id="known">Gewusst</button></div>' +
-      '<div class="actions"><button class="btn" id="shuf">Neu mischen</button></div></div>';
-    const card = $("card");
-    const inScope = () => pool.filter((x, i) => !block || (i >= (block - 1) * 10 && i < block * 10));
+      '<section class="panel"><h2 style="margin-top:0">Wortschatz: ' + esc(L.title) + "</h2>" +
+      '<p class="muted">' + L.W.length + " Wörter in " + L.groups.length + " Themengruppen. Wörter, die zusammengehören, stehen in derselben Gruppe. Die Übersetzung ist immer sichtbar.</p>" + bar(kw, L.W.length) + "</section>" +
+      '<div class="menu" style="margin-top:12px">' +
+      L.groups.map((g, i) => {
+        const k = countKnown(g.items);
+        return '<button class="item" ' + navAttr("studyg", { id: L.id, gi: i, back: { name: "vocab", args: a } }) + '><span class="t">' + (i + 1) + ". " + esc(g.title) + '</span><span class="d">' + g.items.length + " Wörter</span><span class=\"m\">" + k + " von " + g.items.length + " gewusst</span>" + bar(k, g.items.length) + "</button>";
+      }).join("") +
+      '<button class="item" ' + navAttr("studyg", { id: L.id, gi: -1, back: { name: "vocab", args: a } }) + '><span class="t">Alle ' + L.W.length + ' Wörter</span><span class="d">Das ganze Kapitel gemischt oder als Liste.</span></button></div>';
+  }
+  function studygView(a) {
+    const L = lesson(a.id);
+    setCrumb("Kapitel " + L.id + " · " + (a.gi >= 0 ? L.groups[a.gi].title : "alle Wörter"));
+    study({ groups: a.gi >= 0 ? [L.groups[a.gi]] : [{ title: "Alle Wörter", items: L.W }], back: a.back });
+  }
+  const scards = (a) => { const L = lesson(a.id); setCrumb("Kapitel " + L.id + " · Sätze"); study({ groups: [{ title: "Sätze", items: L.SN }], back: a.back, parentArgs: a }); };
 
-    function build() {
-      deck = shuffle(inScope().filter((x) => !onlyOpen || !S.known[x.key]));
-      idx = 0; render(true);
+  // ---------- Lernen: Karten und Liste (Übersetzung immer sichtbar) ----------
+  function study(o) {
+    const items = [].concat.apply([], o.groups.map((g) => g.items));
+    const review = !!o.review;
+    let onlyOpen = false, deck = [], idx = 0, mode = "cards";
+    app.innerHTML =
+      '<div class="panel"><div class="row"><div class="seg" id="mseg"><button class="btn" data-m="cards">Karten</button><button class="btn" data-m="list">Liste</button></div>' +
+      (review ? "" : '<label class="chk"><input type="checkbox" id="open"> nur offene</label>') + "</div>" +
+      '<div class="muted" id="count"></div><div id="fill"></div><div id="body"></div></div>';
+    const body = $("body");
+    const known = () => items.filter((x) => S.known[x.key]).length;
+    function head() {
+      $("count").textContent = known() + " von " + items.length + " gewusst" + (mode === "cards" && deck.length ? " · Karte " + (idx + 1) + " von " + deck.length : "");
+      $("fill").innerHTML = bar(known(), items.length);
+      document.querySelectorAll("#mseg button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.m === mode)));
     }
-    function render(speakNew) {
-      const scope = inScope();
-      const known = scope.filter((x) => S.known[x.key]).length;
-      $("count").textContent = known + " von " + scope.length + " gewusst" + (deck.length ? " · Karte " + (idx + 1) + " von " + deck.length : "");
-      $("fill").innerHTML = bar(known, scope.length);
+    function cardsView() {
+      body.innerHTML =
+        '<div class="card" id="card" aria-live="polite"></div>' +
+        '<div class="actions"><button class="btn bad" id="again">Noch unsicher</button><button class="btn" id="skip">Weiter</button><button class="btn good" id="known">Gewusst</button></div>' +
+        '<div class="actions"><button class="btn" id="shuf">Neu mischen</button></div>';
+      $("skip").onclick = () => { if (deck.length) next(); };
+      $("again").onclick = () => answer(false);
+      $("known").onclick = () => answer(true);
+      $("shuf").onclick = buildDeck;
+      buildDeck();
+    }
+    function buildDeck() {
+      deck = shuffle(items.filter((x) => !onlyOpen || !S.known[x.key]));
+      idx = 0; renderCard(true);
+    }
+    function renderCard(speakNew) {
+      const card = $("card");
+      head();
       if (!deck.length) {
-        card.innerHTML = '<div class="big">Alles gewusst</div><div class="hint">Wähle einen anderen Block oder mische neu.</div>' +
-          (o.back ? '<button class="btn primary" data-nav="' + o.back.name + "\" data-args='" + JSON.stringify(o.back.args) + "'>Zurück zur Lektion</button>" : "");
+        card.innerHTML = '<div class="big">Alles gewusst</div><div class="hint">Wähle eine andere Gruppe oder schalte „nur offene“ aus.</div>' +
+          (o.back ? '<button class="btn primary" data-nav="' + o.back.name + "\" data-args='" + JSON.stringify(o.back.args) + "'>Zurück</button>" : "");
         return;
       }
-      const x = deck[idx];
-      const sentence = x.kind === "s";
+      const x = deck[idx], sentence = x.kind === "s";
       card.innerHTML =
-        '<div class="hint">' + (x.lesson ? "Lektion " + x.lesson : "") + "</div>" +
+        '<div class="hint">' + (x.lesson ? "Kapitel " + x.lesson : "") + "</div>" +
         '<div class="big' + (sentence ? " sent" : "") + '">' + esc(x.sr) + "</div>" +
         '<div class="pron">' + esc(x.pr) + "</div>" +
         '<div class="trans' + (sentence ? " sent" : "") + '">' + esc(x.de) + "</div>" +
         earBtn(x.sr, "Nochmal anhören");
       if (speakNew) autoSay(x.sr);
     }
-    function next() { idx = (idx + 1) % deck.length; render(true); }
+    function next() { idx = (idx + 1) % deck.length; renderCard(true); }
     function answer(good) {
       if (!deck.length) return;
       const x = deck[idx];
@@ -335,21 +434,32 @@
       if (good && (onlyOpen || review)) {
         deck.splice(idx, 1);
         if (idx >= deck.length) idx = 0;
-        render(true);
+        renderCard(true);
       } else next();
     }
-    $("skip").onclick = () => { if (deck.length) next(); };
-    $("again").onclick = () => answer(false);
-    $("known").onclick = () => answer(true);
-    $("shuf").onclick = build;
-    if (!review) $("open").onchange = (e) => { onlyOpen = e.target.checked; build(); };
-    if (blocks) $("blk").onchange = (e) => { block = +e.target.value; build(); };
-    build();
+    function listView() {
+      const rows = items.filter((x) => !onlyOpen || !S.known[x.key]);
+      head();
+      body.innerHTML = '<ul class="list">' + rows.map((x, i) =>
+        '<li><label class="tick"><input type="checkbox" data-k="' + esc(x.key) + '"' + (S.known[x.key] ? " checked" : "") + ' aria-label="gewusst"></label><div style="flex:1"><div class="sr">' + esc(x.sr) +
+        "</div><div>" + esc(x.de) + '</div><div class="pr">' + esc(x.pr) + "</div></div>" + earBtn(x.sr) + "</li>").join("") + "</ul>";
+      body.querySelectorAll("input[data-k]").forEach((c) => {
+        c.onchange = () => {
+          const x = byKey[c.dataset.k];
+          if (c.checked) { S.known[x.key] = true; delete S.weak[x.key]; } else { delete S.known[x.key]; }
+          persist(); head();
+        };
+      });
+    }
+    function render() { mode === "cards" ? cardsView() : listView(); }
+    $("mseg").addEventListener("click", (e) => { const b = e.target.closest("[data-m]"); if (b) { mode = b.dataset.m; render(); } });
+    if (!review) $("open").onchange = (e) => { onlyOpen = e.target.checked; render(); };
+    render();
   }
-  const wcards = (a) => { const L = lesson(a.id); setCrumb("Lektion " + L.id + " · Vokabeln"); study({ pool: L.W, back: a.back, blocks: true }); };
-  const scards = (a) => { const L = lesson(a.id); setCrumb("Lektion " + L.id + " · Sätze"); study({ pool: L.SN, back: a.back }); };
 
   // ---------- Fragen-Baukasten ----------
+  const byKey = {};
+  ALL.forEach((x) => { byKey[x.key] = x; });
   function distractors(x, pool, field) {
     let src = pool.filter((y) => y.key !== x.key);
     if (src.length < 6) src = ALL.filter((y) => y.kind === x.kind && y.key !== x.key);
@@ -405,7 +515,6 @@
 
   // ---------- Fragen abspielen ----------
   function runQuestions(cfg) {
-    // cfg: {title, qs, back, again, bestKey, lessonId, final}
     const qs = cfg.qs;
     let i = 0, score = 0;
     const wrong = [];
@@ -446,10 +555,10 @@
         b[cfg.bestKey] = Math.max(b[cfg.bestKey] || 0, pct);
         persist();
         if (cfg.final) verdict = pct >= PASS
-          ? '<p class="fb ok">Bestanden. Lektion ' + cfg.lessonId + " ist abgeschlossen.</p>"
-          : '<p class="fb no">Noch nicht bestanden (nötig: ' + PASS + " %). Wiederhole die Vokabeln und versuche es noch einmal.</p>";
+          ? '<p class="fb ok">Bestanden. Kapitel ' + cfg.lessonId + " ist abgeschlossen.</p>"
+          : '<p class="fb no">Noch nicht bestanden (nötig: ' + PASS + " %). Wiederhole den Wortschatz und versuche es noch einmal.</p>";
       }
-      const nextL = cfg.final && pct >= PASS && cfg.lessonId < 10 ? cfg.lessonId + 1 : null;
+      const nextL = cfg.final && pct >= PASS && cfg.lessonId < LES.length ? cfg.lessonId + 1 : null;
       box.innerHTML =
         '<h2 style="margin-top:0">' + score + " von " + qs.length + " richtig (" + pct + " %)</h2>" + verdict +
         (wrong.length
@@ -457,83 +566,86 @@
               '<li><div style="flex:1"><div class="sr">' + esc(w.sr) + "</div><div>" + esc(w.de) + '</div><div class="pr">' + esc(w.pr) + "</div></div>" + earBtn(w.sr) + "</li>").join("") + "</ul>"
           : "<p>Alles richtig.</p>") +
         '<div class="actions"><button class="btn primary" id="again">Nochmal</button>' +
-        (cfg.back ? '<button class="btn" data-nav="' + cfg.back.name + "\" data-args='" + JSON.stringify(cfg.back.args) + "'>" + (cfg.back.name === "lesson" ? "Zur Lektion" : "Zurück") + "</button>" : "") +
-        (nextL ? '<button class="btn good" ' + navAttr("lesson", { id: nextL }) + ">Nächste Lektion</button>" : "") +
+        (cfg.back ? '<button class="btn" data-nav="' + cfg.back.name + "\" data-args='" + JSON.stringify(cfg.back.args) + "'>" + (cfg.back.name === "chapter" ? "Zum Kapitel" : "Zurück") + "</button>" : "") +
+        (nextL ? '<button class="btn good" ' + navAttr("chapter", { id: nextL }) + ">Nächstes Kapitel</button>" : "") +
         '<button class="btn" ' + navAttr("start") + ">Hauptmenü</button></div>";
       $("again").onclick = cfg.again;
     }
     ask();
   }
 
-  // ---------- Übungen & Test (pro Lektion) ----------
+  // ---------- Übungen & Test (pro Kapitel) ----------
   function practiceView(a) {
     const L = lesson(a.id);
-    setCrumb("Lektion " + L.id + " · Übungen");
+    setCrumb("Kapitel " + L.id + " · Übungen");
     const b = prog(L.id).best;
     const row = (key, title, desc) =>
       '<button class="item" data-ex="' + key + '"><span class="t">' + title + '</span><span class="d">' + desc + '</span><span class="m">' + (b[key] !== undefined ? "Bestwert " + b[key] + " %" : "noch nicht gemacht") + "</span></button>";
-    app.innerHTML = '<section class="panel"><h2 style="margin-top:0">Übungen: ' + esc(L.title) + "</h2><p class=\"muted\">Jede Übung hat 10 Fragen und kann beliebig oft wiederholt werden.</p></section>" +
+    app.innerHTML = '<section class="panel"><h2 style="margin-top:0">Übungen: ' + esc(L.title) + '</h2><p class="muted">Hier ist die Übersetzung verborgen. Jede Übung kann beliebig oft wiederholt werden.</p></section>' +
       '<div class="menu" style="margin-top:12px">' +
-      row("vocab", "Vokabelquiz", "Wort sehen oder Bedeutung wählen, in beide Richtungen.") +
-      row("hear", "Hören & Verstehen", "Du hörst ein Wort oder einen Satz, der Text bleibt verborgen.") +
-      row("gap", "Lückentext", "Ergänze das fehlende Wort im Satz.") + "</div>";
+      row("vocab", "Vokabelquiz (15 Fragen)", "Wort sehen oder Bedeutung wählen, in beide Richtungen.") +
+      row("hear", "Hören & Verstehen (15 Aufgaben)", "Du hörst ein Wort oder einen Satz, der Text bleibt verborgen.") +
+      row("gap", "Lückentext (bis 10 Sätze)", "Ergänze das fehlende Wort im Satz.") + "</div>";
     app.querySelectorAll("[data-ex]").forEach((el) => {
       el.onclick = () => {
         const k = el.dataset.ex;
         const run = () => {
           let qs = [];
           if (k === "vocab") {
-            const w = shuffle(L.W).slice(0, 10);
-            qs = w.map((x, n) => qChoice(x, L.W, n < 6 ? "sr" : "de"));
+            qs = shuffle(L.W).slice(0, 15).map((x, n) => qChoice(x, L.W, n < 9 ? "sr" : "de"));
           } else if (k === "hear") {
-            qs = shuffle(L.W).slice(0, 6).map((x) => qListen(x, L.W)).concat(shuffle(L.SN).slice(0, 4).map((x) => qListen(x, L.SN)));
+            qs = shuffle(L.W).slice(0, 10).map((x) => qListen(x, L.W)).concat(shuffle(L.SN).slice(0, 5).map((x) => qListen(x, L.SN)));
           } else {
             shuffle(L.SN).forEach((x) => { if (qs.length < 10) { const g = qGap(x, L.SN); if (g) qs.push(g); } });
           }
-          runQuestions({ title: L.title, qs: shuffle(qs), back: lessonBack(L.id), again: run, bestKey: k, lessonId: L.id });
+          runQuestions({ title: L.title, qs: shuffle(qs), back: chBack(L.id), again: run, bestKey: k, lessonId: L.id });
         };
-        setCrumb("Lektion " + L.id + " · " + (k === "vocab" ? "Vokabelquiz" : k === "hear" ? "Hören" : "Lückentext"));
+        setCrumb("Kapitel " + L.id + " · " + (k === "vocab" ? "Vokabelquiz" : k === "hear" ? "Hören" : "Lückentext"));
         run();
       };
     });
   }
   function testView(a) {
     const L = lesson(a.id);
-    setCrumb("Lektion " + L.id + " · Lektionstest");
+    setCrumb("Kapitel " + L.id + " · Kapiteltest");
     const b = prog(L.id).best;
-    app.innerHTML = '<section class="panel"><h2 style="margin-top:0">Lektionstest</h2>' +
-      "<p>10 gemischte Fragen aus Lektion " + L.id + " (Vokabeln, Sätze, Hören, Lückentext). Mit " + PASS + " % gilt die Lektion als abgeschlossen.</p>" +
+    app.innerHTML = '<section class="panel"><h2 style="margin-top:0">Kapiteltest</h2>' +
+      "<p>20 gemischte Fragen aus Kapitel " + L.id + " (Vokabeln, Sätze, Hören, Lückentext). Mit " + PASS + " % gilt das Kapitel als abgeschlossen.</p>" +
       (b.final !== undefined ? '<p class="muted">Bestwert: ' + b.final + " %</p>" : "") +
       '<button class="btn primary" id="go">Test starten</button></section>';
     const run = () => {
       const w = shuffle(L.W), s = shuffle(L.SN);
-      let qs = [qChoice(w[0], L.W, "sr"), qChoice(w[1], L.W, "sr"), qChoice(w[2], L.W, "sr"), qChoice(w[3], L.W, "sr"),
-        qChoice(w[4], L.W, "de"), qChoice(w[5], L.W, "de"), qListen(w[6], L.W), qListen(s[0], L.SN)];
+      let qs = [];
+      for (let i = 0; i < 8; i++) qs.push(qChoice(w[i], L.W, "sr"));
+      for (let i = 8; i < 12; i++) qs.push(qChoice(w[i], L.W, "de"));
+      for (let i = 12; i < 15; i++) qs.push(qListen(w[i], L.W));
+      qs.push(qListen(s[0], L.SN), qListen(s[1], L.SN));
       const gaps = [];
-      s.slice(1).forEach((x) => { if (gaps.length < 2) { const g = qGap(x, L.SN); if (g) gaps.push(g); } });
+      s.slice(2).forEach((x) => { if (gaps.length < 3) { const g = qGap(x, L.SN); if (g) gaps.push(g); } });
       qs = qs.concat(gaps);
-      runQuestions({ title: "Lektionstest", qs: shuffle(qs), back: lessonBack(L.id), again: run, bestKey: "final", lessonId: L.id, final: true });
+      for (let i = 15; qs.length < 20 && i < w.length; i++) qs.push(qChoice(w[i], L.W, "sr"));
+      runQuestions({ title: "Kapiteltest", qs: shuffle(qs), back: chBack(L.id), again: run, bestKey: "final", lessonId: L.id, final: true });
     };
     $("go").onclick = run;
   }
 
-  // ---------- Wiederholen (alle Lektionen) ----------
+  // ---------- Wiederholen (alle Kapitel) ----------
   function reviewView() {
     setCrumb("Wiederholen");
     const weak = weakItems();
     if (!weak.length) {
-      app.innerHTML = '<div class="panel"><h2 style="margin-top:0">Nichts zu wiederholen</h2><p class="muted">Sobald du bei einer Karte „Nochmal“ wählst oder im Quiz falsch liegst, erscheint sie hier.</p>' +
+      app.innerHTML = '<div class="panel"><h2 style="margin-top:0">Nichts zu wiederholen</h2><p class="muted">Sobald du bei einer Karte „Noch unsicher“ wählst oder im Quiz falsch liegst, erscheint sie hier.</p>' +
         '<button class="btn primary" ' + navAttr("start") + ">Hauptmenü</button></div>";
       return;
     }
     app.innerHTML = '<section class="panel"><h2 style="margin-top:0">Wiederholen</h2><p>' + weak.length + " Einträge sind noch offen.</p>" +
       '<div class="actions" style="justify-content:flex-start"><button class="btn primary" id="rc">Mit Karten wiederholen</button><button class="btn" id="rq">Quiz mit offenen Einträgen</button></div></section>';
-    $("rc").onclick = () => { setCrumb("Wiederholen · Karten"); study({ pool: weak, review: true, back: { name: "review", args: {} } }); };
+    $("rc").onclick = () => { setCrumb("Wiederholen · Karten"); study({ groups: [{ title: "Offen", items: weak }], review: true, back: { name: "review", args: {} } }); };
     $("rq").onclick = () => {
       const run = () => {
         const w = shuffle(weakItems()).slice(0, 10);
         if (!w.length) { nav("review"); return; }
-        const qs = w.map((x) => qChoice(x, x.kind === "w" ? ALLW : ALLS, Math.random() < 0.7 ? "sr" : "de"));
+        const qs = w.map((x) => qChoice(x, x.kind === "w" ? lesson(x.lesson).W : lesson(x.lesson).SN, Math.random() < 0.7 ? "sr" : "de"));
         runQuestions({ title: "Wiederholung", qs: qs, back: { name: "review", args: {} }, again: run });
       };
       setCrumb("Wiederholen · Quiz");
@@ -547,22 +659,21 @@
     let kind = "w", les = 0, q = "";
     app.innerHTML =
       '<div class="panel"><div class="row"><div class="seg" id="seg"><button class="btn" data-kind="w">Wörter</button><button class="btn" data-kind="s">Sätze</button></div>' +
-      '<input type="search" id="q" class="grow" placeholder="Suchen (Serbisch oder Deutsch)" aria-label="Suchen"></div>' +
-      '<div class="chips" id="chips"></div><div class="muted" id="cnt"></div><ul class="list" id="sl"></ul></div>';
+      '<select id="lsel" aria-label="Kapitel"><option value="0">Alle Kapitel</option>' + LES.map((L) => '<option value="' + L.id + '">' + L.id + ". " + esc(L.title) + "</option>").join("") + "</select></div>" +
+      '<div class="row"><input type="search" id="q" class="grow" placeholder="Suchen (Serbisch oder Deutsch)" aria-label="Suchen"></div>' +
+      '<div class="muted" id="cnt"></div><ul class="list" id="sl"></ul></div>';
     function draw() {
       const base = kind === "w" ? ALLW : ALLS;
       document.querySelectorAll("#seg button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.kind === kind)));
-      $("chips").innerHTML = '<button class="btn chip" aria-pressed="' + (les === 0) + '" data-l="0">Alle</button>' +
-        LES.map((L) => '<button class="btn chip" aria-pressed="' + (les === L.id) + '" data-l="' + L.id + '">' + L.id + " " + esc(L.title.split(/[ ,:&]/)[0]) + "</button>").join("");
       const term = q.trim().toLowerCase();
       const rows = base.filter((x) => (!les || x.lesson === les) && (!term || x.sr.toLowerCase().indexOf(term) >= 0 || x.de.toLowerCase().indexOf(term) >= 0));
-      $("cnt").textContent = rows.length + " Einträge";
-      $("sl").innerHTML = rows.slice(0, 150).map((x) =>
+      $("cnt").textContent = rows.length + " Einträge" + (rows.length > 200 ? " (die ersten 200 werden angezeigt, grenze die Suche ein)" : "");
+      $("sl").innerHTML = rows.slice(0, 200).map((x) =>
         '<li><div style="flex:1"><div class="sr">' + esc(x.sr) + "</div><div>" + esc(x.de) + '</div><div class="pr">' + esc(x.pr) + "</div></div>" + earBtn(x.sr) + "</li>").join("") ||
         '<li class="muted">Nichts gefunden.</li>';
     }
     $("seg").addEventListener("click", (e) => { const b = e.target.closest("[data-kind]"); if (b) { kind = b.dataset.kind; draw(); } });
-    $("chips").addEventListener("click", (e) => { const b = e.target.closest("[data-l]"); if (b) { les = +b.dataset.l; draw(); } });
+    $("lsel").onchange = (e) => { les = +e.target.value; draw(); };
     $("q").oninput = (e) => { q = e.target.value; draw(); };
     draw();
   }
@@ -593,19 +704,29 @@
     app.innerHTML =
       '<div class="panel"><h2 style="margin-top:0">Ton</h2>' +
       '<label class="chk"><input type="checkbox" id="auto"' + (S.set.auto ? " checked" : "") + "> Neue Wörter und Sätze automatisch vorsprechen</label>" +
-      '<div class="row" style="margin-top:12px"><label for="tempo">Tempo</label><select id="tempo"><option value="n">normal</option><option value="l">langsam</option></select></div>' +
+      '<div class="row" style="margin-top:12px"><label for="tempo">Tempo (Karten)</label><select id="tempo"><option value="n">normal</option><option value="l">langsam</option></select></div>' +
       '<div class="row"><label for="voice">Stimme</label><select id="voice" class="grow">' +
       (sel.length ? sel.map((v) => '<option value="' + esc(v.voiceURI) + '"' + (cur2 && cur2.voiceURI === v.voiceURI ? " selected" : "") + ">" + esc(v.name + " (" + v.lang + ")") + "</option>").join("")
         : '<option value="">keine passende Stimme gefunden</option>') + "</select></div>" +
       '<p class="' + (status.ok ? "fb ok" : "note") + '">' + esc(status.text) + "</p>" +
       '<div class="actions" style="justify-content:flex-start"><button class="btn primary" id="test">Probe hören</button></div></div>' +
+      '<div class="panel" style="margin-top:14px"><h2 style="margin-top:0">Dialoge</h2>' +
+      '<div class="row"><label for="drate">Dialog-Tempo</label><select id="drate"><option value="0.55">sehr langsam</option><option value="0.7">langsam</option><option value="0.85">normal</option></select></div>' +
+      '<label class="chk"><input type="checkbox" id="dauto"> automatisch zur nächsten Zeile</label>' +
+      '<label class="chk" style="margin-top:8px"><input type="checkbox" id="dpause"> Pause zum Nachsprechen nach jeder Zeile</label></div>' +
       '<div class="panel" style="margin-top:14px"><h2 style="margin-top:0">Fortschritt</h2>' +
       "<p>" + kn + " von " + ALLW.length + " Wörtern und " + ks + " von " + ALLS.length + " Sätzen gewusst. " + weakItems().length + " zum Wiederholen.</p>" +
       '<button class="btn bad" id="reset">Fortschritt löschen</button></div>';
     $("tempo").value = S.set.slow ? "l" : "n";
+    $("drate").value = String(S.set.dlgRate);
+    $("dauto").checked = !!S.set.dlgAuto;
+    $("dpause").checked = !!S.set.dlgPause;
     $("auto").onchange = (e) => { S.set.auto = e.target.checked; persist(); };
     $("tempo").onchange = (e) => { S.set.slow = e.target.value === "l"; persist(); };
     $("voice").onchange = (e) => { S.set.voice = e.target.value; persist(); settingsView(); };
+    $("drate").onchange = (e) => { S.set.dlgRate = +e.target.value; persist(); };
+    $("dauto").onchange = (e) => { S.set.dlgAuto = e.target.checked; persist(); };
+    $("dpause").onchange = (e) => { S.set.dlgPause = e.target.checked; persist(); };
     $("test").onclick = () => say("Dobar dan! Kako ste? Drago mi je.");
     let armed = false;
     $("reset").onclick = () => {
@@ -615,13 +736,13 @@
   }
 
   const VIEWS = {
-    start: home, lesson: lessonView, dialog: dialogView, grammar: grammarView, wcards: wcards, scards: scards,
+    start: home, chapter: chapterView, dialogs: dialogsView, dialog: dialogView, grammar: grammarView, vocab: vocabView, studyg: studygView, scards: scards,
     practice: practiceView, test: testView, review: reviewView, lookup: lookupView, sounds: soundsView, settings: settingsView
   };
   const HASH = { wiederholen: "review", nachschlagen: "lookup", aussprache: "sounds", einstellungen: "settings" };
   const h = (location.hash || "").slice(1);
-  const m = /^lektion(\d+)$/.exec(h);
-  if (m && lesson(+m[1])) nav("lesson", { id: +m[1] });
+  const m = /^kapitel(\d+)$/.exec(h);
+  if (m && lesson(+m[1])) nav("chapter", { id: +m[1] });
   else if (HASH[h]) nav(HASH[h]);
   else nav("start");
 

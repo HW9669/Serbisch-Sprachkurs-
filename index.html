@@ -123,6 +123,27 @@
   .qtype { color: var(--muted); font-size: .85rem; text-transform: uppercase; letter-spacing: .06em; margin-top: 4px; }
   .fb-line { margin: 4px 0; }
 
+
+  /* Dialog-Steuerung */
+  .dbar {
+    position: sticky; bottom: 0; margin-top: 14px; display: grid; gap: 8px;
+    padding: 10px 12px calc(10px + env(safe-area-inset-bottom, 0px));
+    background: var(--surface); border: 1px solid var(--line); border-radius: 14px 14px 0 0; box-shadow: 0 -4px 14px rgba(0, 0, 0, .12);
+  }
+  .drow { display: flex; gap: 8px; flex-wrap: wrap; }
+  .drow .btn { flex: 1 1 90px; }
+  .drow.small { align-items: center; font-size: .9rem; color: var(--muted); }
+  .drow.small label { display: flex; gap: 6px; align-items: center; }
+  .drow.small select { min-height: 36px; padding: 4px 8px; }
+  .dlg li .your { display: none; color: var(--good); font-weight: 650; font-size: .9rem; }
+  .dlg li.wait .your { display: block; }
+  .dlg li.wait { border-color: var(--good); box-shadow: 0 0 0 2px var(--good); }
+  .dlg li { scroll-margin-top: 90px; cursor: pointer; }
+  .dopt summary { cursor: pointer; color: var(--muted); font-size: .9rem; padding: 4px 0; }
+  .dopt .drow.small { margin-top: 6px; }
+  .tick { display: grid; place-items: center; min-width: 44px; min-height: 44px; }
+  .tick input { width: 22px; height: 22px; }
+
   /* Karteikarte & Quiz */
   .card {
     min-height: 230px; display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -181,6 +202,10 @@
 </header>
 <main id="app"></main>
 <script src="data.js"></script>
+<script src="ch-a.js"></script>
+<script src="ch-b.js"></script>
+<script src="ch-c.js"></script>
+<script src="ch-d.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

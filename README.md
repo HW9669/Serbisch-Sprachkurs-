@@ -1,29 +1,26 @@
 # Serbisch für Anfänger
 
-Einsteigerkurs Serbisch für deutschsprachige Lernende, aufgebaut wie ein Sprachkurs: **10 Lektionen, 500 Vokabeln, 100 Alltagssätze**. Alles in **lateinischer Schrift** (kein Kyrillisch), mit Lautschrift für **österreichisches Deutsch**.
+Einsteigerkurs Serbisch für deutschsprachige Lernende, aufgebaut wie ein Sprachkurs: **20 Kapitel, 2.500 Vokabeln, 300 Sätze, 40 Dialoge**. Alles in **lateinischer Schrift** (kein Kyrillisch), mit Lautschrift für **österreichisches Deutsch**. Sprachvariante: Standardserbisch (ekavisch, wie in Serbien).
 
-## Lektionen
+## Kapitel
 
-| # | Thema |
+| Teil | Kapitel |
 |---|---|
-| 1 | Begrüßung & Vorstellung |
-| 2 | Zahlen, Zeit & Wochentage |
-| 3 | Familie & Menschen |
-| 4 | Smalltalk: Wetter, Gefühle, Hobbys |
-| 5 | Essen & Trinken |
-| 6 | Einkaufen & Geld |
-| 7 | Reisen & Verkehr |
-| 8 | Wohnen & Immobilien |
-| 9 | Gesundheit & Körper |
-| 10 | Arbeit & Alltag |
+| Erste Schritte | 1 Begrüßung & Höflichkeit · 2 Sich vorstellen & Kennenlernen · 3 Zahlen, Mengen & Maße · 4 Zeit, Datum & Kalender |
+| Menschen | 5 Familie & Beziehungen · 6 Menschen beschreiben · 7 Körper & Gesundheit |
+| Essen, Einkaufen, Wohnen | 8 Essen & Trinken · 9 Einkaufen, Kleidung & Geld · 10 Haushalt & Wohnen · 11 Immobilien & Wohnungssuche |
+| Unterwegs | 12 Reisen & Verkehr · 13 Hotel, Urlaub & Sehenswürdigkeiten · 14 Stadt & Orientierung · 15 Natur, Wetter & Tiere |
+| Beruf, Bildung, Freizeit | 16 Arbeit & Beruf · 17 Bildung & Sprache lernen · 18 Freizeit, Sport & Hobbys · 19 Telefon, Internet & Medien |
+| Wortschatz-Basis | 20 Verben, Adjektive & Alltagswörter |
 
-Jede Lektion hat sechs Schritte: Dialog hören, 50 Vokabeln (in Blöcken zu 10), 10 Sätze, Grammatik-Tipp, drei Übungen (Vokabelquiz, Hören & Verstehen, Lückentext) und einen Lektionstest (ab 80 % bestanden).
+Jedes Kapitel enthält 125 Wörter in 5 Themengruppen, 15 Sätze, 2 Dialoge und Grammatik-Tipps. Ablauf pro Kapitel: Dialoge hören und nachsprechen, Wortschatz (Karten oder Liste), Sätze, Grammatik, drei Übungen (Vokabelquiz, Hören & Verstehen, Lückentext) und ein Kapiteltest (ab 80 % bestanden).
 
-## Ton
+## Ton und Dialoge
 
-In den Lernkarten, Dialogen und Listen ist die deutsche Übersetzung immer sichtbar; nur in den Prüfungen (Quiz, Hören, Lückentext, Lektionstest) ist sie verborgen.
-
-Jedes neue Wort, jeder neue Satz und jeder Dialog wird automatisch vorgesprochen. Der Ton kommt aus der Sprachausgabe des Browsers; die Stimme kann in den Einstellungen gewählt werden. Ohne installierte serbische Stimme wird ersatzweise eine kroatische oder bosnische verwendet.
+- Jedes neue Wort und jeder neue Satz wird automatisch vorgesprochen.
+- In den Dialogen wird Zeile für Zeile gesprochen, danach folgt eine Pause zum Nachsprechen. Tempo und Pause sind einstellbar, die Anzeige scrollt mit.
+- Die deutsche Übersetzung ist beim Lernen immer sichtbar und nur in den Prüfungen verborgen.
+- Der Ton kommt aus der Sprachausgabe des Browsers. Ohne installierte serbische Stimme wird ersatzweise eine kroatische oder bosnische verwendet.
 
 ## Benutzen
 
@@ -34,7 +31,8 @@ Jedes neue Wort, jeder neue Satz und jeder Dialog wird automatisch vorgesprochen
 | Datei | Zweck |
 |---|---|
 | `index.html` | Oberfläche und Styling |
-| `app.js` | Menü, Lektionen, Karten, Übungen, Ton |
-| `data.js` | Alle Lektionen (hier erweitern oder korrigieren) |
+| `app.js` | Menü, Kapitel, Karten, Dialoge, Übungen, Ton |
+| `data.js` | Aussprache-Legende |
+| `ch-a.js` … `ch-d.js` | Die 20 Kapitel (hier korrigieren oder erweitern) |
 
-In `data.js` steht die Betonung als Akzent auf dem betonten Vokal (á é í ó ú, ŕ). Daraus entstehen die normale Schreibweise und die Lautschrift automatisch.
+In den Kapiteldateien steht die Betonung als Akzent auf dem betonten Vokal (á é í ó ú, ŕ). Daraus entstehen die normale Schreibweise und die Lautschrift automatisch.
